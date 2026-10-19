@@ -47,10 +47,9 @@ export async function authRoutes(app:FastifyInstance){
       }>(launch_token);
 
       const nonceKey = `nonce:${payload.nonce}`;
-      const isUsed = await redis.get(nonceKey);
-      if (isUsed)  throw new SessionExpiredError()
       
-      await redis.set(nonceKey,'1','EX',60,'NX')
+     const result= await redis.set(nonceKey,'1','EX',60,'NX')
+     if(!result) throw new SessionExpiredError()
 
       const [tenant] = await db.select().from(tenants).where(eq(tenants.id,payload.tenant_id))
       if (!tenant)  throw new AccessDenied()
