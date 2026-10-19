@@ -11,9 +11,9 @@ Artıq edilib (task-lardan əvvəl): `eventsRoutes`-un qeydiyyatı, `/auth/excha
 
 - [x] [001 — Env validasiyası və secret-lər](001-env-validasiyasi-ve-secretler.md)
 - [x] [002 — `server.ts`: düzgün start və graceful shutdown](002-server-start-ve-shutdown.md)
-- [ ] [003 — Lazımsız fayllar və importların təmizlənməsi](003-lazimsiz-fayllar-ve-importlar.md)
-- [ ] [004 — `.env` və git təhlükəsizliyi](004-env-ve-git-tehlukesizliyi.md)
-- [ ] [005 — Schema səliqəsi: adlar, `updated_at`, dairəvi import](005-schema-seliqesi.md)
+- [x] [003 — Lazımsız fayllar və importların təmizlənməsi](003-lazimsiz-fayllar-ve-importlar.md)
+- [x] [004 — `.env` və git təhlükəsizliyi](004-env-ve-git-tehlukesizliyi.md)
+- [x] [005 — Schema səliqəsi: adlar, `updated_at`, dairəvi import](005-schema-seliqesi.md)
 - [ ] [006 — Docker Compose ilə lokal mühit](006-docker-compose-lokal-muhit.md)
 - [ ] [007 — Migration və seed iş axını](007-migration-ve-seed-is-axini.md)
 - [ ] [008 — Vahid cavab formatı](008-vahid-cavab-formati.md)

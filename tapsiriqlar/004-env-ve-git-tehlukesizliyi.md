@@ -1,6 +1,6 @@
 # 004 — `.env` və git təhlükəsizliyi
 
-**Faza:** 0 · **Asılılıq:** yoxdur · **Status:** [ ]
+**Faza:** 0 · **Asılılıq:** yoxdur · **Status:** [x] Həll olunub
 (Köhnə `TASKS.md`: T14)
 
 ## Məqsəd

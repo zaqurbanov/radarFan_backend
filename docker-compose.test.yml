@@ -1,0 +1,12 @@
+services:
+  postgres_test:
+    image: postgres:15-alpine
+    container_name: radar_postgres_test
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: radar_test_db
+    ports:      
+      - "127.0.0.1:5433:5432"
+
+ 

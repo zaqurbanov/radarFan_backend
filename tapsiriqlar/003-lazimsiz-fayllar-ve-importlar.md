@@ -1,6 +1,6 @@
 # 003 — Lazımsız fayllar və importların təmizlənməsi
 
-**Faza:** 0 · **Asılılıq:** yoxdur · **Status:** [ ]
+**Faza:** 0 · **Asılılıq:** yoxdur · **Status:** [x] Həll olunub
 (Köhnə `TASKS.md`: T12)
 
 ## Məqsəd

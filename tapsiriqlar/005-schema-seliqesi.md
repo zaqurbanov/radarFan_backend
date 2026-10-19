@@ -1,6 +1,6 @@
 # 005 — Schema səliqəsi: adlar, `updated_at`, dairəvi import
 
-**Faza:** 0 · **Asılılıq:** 007 ilə birlikdə (migration lazım olacaq) · **Status:** [ ]
+**Faza:** 0 · **Asılılıq:** 007 ilə birlikdə (migration lazım olacaq) · **Status:** [x] Həll olunub
 (Köhnə `TASKS.md`: T13)
 
 ## Məqsəd
