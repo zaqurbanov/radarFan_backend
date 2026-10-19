@@ -8,7 +8,6 @@ import { apiPrefix } from "./common/constants/constants.js"
 import { env } from "./config/env.js"
 import { db } from "./db/index.js"
 import { redis } from "./config/redis.js"
-
 export const buildApp =()=>{
   const app =Fastify({
     logger:true,
