@@ -19,7 +19,7 @@ export const events = pgTable(
     editorialNote: varchar("editorial_note", { length: 255 }),
     startAt: timestamp("start_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
-      .defaultNow()
+      .defaultNow().$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [

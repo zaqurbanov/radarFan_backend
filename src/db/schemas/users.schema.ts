@@ -10,6 +10,6 @@ export const users = pgTable('users',{
   role: userRoleEnum('role').notNull().default('user'),
   status: userStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at',{withTimezone: true}).defaultNow().notNull(),
-  uptadedAt: timestamp('updated_at',{withTimezone: true}).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at',{withTimezone: true}).defaultNow().$onUpdate(() => new Date()).notNull(),
 },(table)=>[
 unique('users_tenant_external_user_unique').on(table.tenantId, table.externalUserId),])

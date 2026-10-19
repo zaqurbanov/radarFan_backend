@@ -7,7 +7,7 @@ export const tenants = pgTable('tenants', {
   slug: varchar('slug',{length:100}).notNull().unique(),
   config: jsonb('config').notNull(),
   timezone: varchar('timezone').notNull(),
-  rulesVersion: integer('rulesVersion').default(1).notNull(),
+  rulesVersion: integer('rules_version').default(1).notNull(),
   createdAt: timestamp('created_at',{withTimezone: true}).defaultNow().notNull(),
-  uptadedAt: timestamp('updated_at',{withTimezone: true}).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at',{withTimezone: true}).defaultNow().$onUpdate(() => new Date()).notNull(),
 });

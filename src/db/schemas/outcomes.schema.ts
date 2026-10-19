@@ -13,5 +13,6 @@ export const outcomes = pgTable("outcomes", {
   status: outcomeStatusEnum("status").default("active").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
+    .$onUpdate(() => new Date())
     .notNull(),
 });
