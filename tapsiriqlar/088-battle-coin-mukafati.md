@@ -1,18 +1,18 @@
-# 088 — Battle coin mükafatı (+20 ◈)
+# 088 — Duel üçün coin (+20 ◈)
 
-**Faza:** 6 · **Asılılıq:** 079, 086 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 079, 086
 
-## Məqsəd
-Duel tamamlananda hər düzgün cavaba 20 ◈.
+## Qısaca
+Duel bitəndə hər düzgün cavaba 20 coin.
 
-## Niyə
-Sayt: "Верный ответ — 50 XP и 20 ◈", "+20 ◈ за верный ответ в первых 3 баттлах", nəticə ekranı "+100 XP · +40 ◈".
+## Saytda
+"Верный ответ — 50 XP и 20 ◈", nəticə: "+100 XP · +40 ◈".
 
-## Necə edəcəksən
-1. 085 ilə eyni tranzaksiyada: `earnCoins(correct × coins_per_correct, source_type=battle, source_id=battle_id)`.
-2. Eyni limit (`xp_eligible`, 080). Sayt "ilk 3 battle" deyir. Ayrı limit lazımdırmı? Hazırda eyni.
-3. `battle.completed` payload-ına `awarded_coins`, `coin_balance` əlavə et.
+## Nə edəcəksən
+1. XP ilə (085) **eyni tranzaksiyada**: `düzgün × 20`, mənbə `battle` + duel ID.
+2. Eyni gündəlik limit (`xp_eligible`).
+3. `battle.completed` bildirişinə `awarded_coins` və yeni coin balansını əlavə et.
 
-## Qəbul meyarları
+## Hazır olduğunu necə yoxlayarsan
 - [ ] 2 düzgün → +40 ◈.
-- [ ] 4-cü battle (limitdən sonra) → 0 ◈.
+- [ ] Limitdən sonrakı duel → 0 ◈.

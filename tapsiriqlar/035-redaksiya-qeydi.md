@@ -1,36 +1,31 @@
-# 035 — Redaksiya qeydi (editorial note)
+# 035 — Redaksiya qeydi
 
-**Faza:** 2 · **Asılılıq:** 027 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 027
 
-## Məqsəd
-Hər matç kartında qısa redaksiya mətni ("Какая передача перед вторым голом! 🔥").
-
-## Niyə
-- Sənəd (bölmə 3): kartda "qısa redaksiya qeydi". Bölmə 6: "admin öz tenant-ının ... redaksiya qeydlərini idarə edir".
-- `events.editorial_note` artıq var (varchar 255).
+## Qısaca
+Matç kartındakı qısa redaktor yazısı: "Какая передача перед вторым голом! 🔥".
 
 ## Problem
-`events` cədvəli **feed tərəfindən** yazılır (027). Admin qeyd yazsa, feed upsert-i onu silə bilərmi? Upsert-də `editorial_note` sütununu yeniləməsən, problem yoxdur. Amma bu, asanlıqla unudulan qaydadır.
+İndi bu, `events.editorial_note` sütunundadır. Amma `events` cədvəlini **mənbə** (feed) yeniləyir. Feed upsert edəndə admin-in yazdığı qeydi təsadüfən silə bilər.
 
-**Tövsiyə:** ayrıca cədvəl. Feed məlumatı ilə redaksiya məlumatı ayrı yaşasın.
+## Həll: ayrı cədvəl
+Mənbənin məlumatı ilə redaktorun məlumatı ayrı yaşasın.
 
-## Cədvəl
-**`event_editorials`**
-| Sütun | Tip |
+### `event_editorials`
+| Sütun | İzah |
 |---|---|
-| event_id | uuid PK FK → events |
-| tenant_id | uuid NOT NULL |
-| note | varchar(140) NOT NULL |
-| author_id | uuid FK → users (admin) |
-| locale | varchar(10) |
-| updated_at | timestamptz |
+| event_id | matç |
+| tenant_id | |
+| note | qeyd (maks. 140 simvol) |
+| author_id | yazan admin |
+| locale | dil |
+| updated_at | |
 
-Sonra `events.editorial_note` sütununu sil (migration).
+## Nə edəcəksən
+1. Cədvəli yarat.
+2. Köhnə `editorial_note` məlumatını yeni cədvələ köçür, sonra köhnə sütunu sil (migration).
+3. Lentdə `LEFT JOIN` ilə götür.
+4. Admin endpoint-i task 117-dədir. İndi yalnız seed və oxuma.
 
-## Necə edəcəksən
-1. Lentdə bu cədvəli `LEFT JOIN` ilə götür.
-2. Admin endpoint task 117-də. İndi yalnız seed + oxuma.
-3. Saytda kartdakı qeyd ilə çatdakı son mesaj eyni mətndir ("Какая передача..."). Bu, demo üçün təsadüfdür, yoxsa qeyd çatın son mesajıdır? Sənədə görə ayrı şeylərdir.
-
-## Qəbul meyarları
-- [ ] Feed upsert-i redaksiya qeydini silmir (test).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Feed matçı yeniləyəndə redaksiya qeydi silinmir (test).

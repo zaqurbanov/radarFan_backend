@@ -1,38 +1,36 @@
-# 126 — Məlumatların saxlanma müddəti və silinməsi
+# 126 — Məlumat nə qədər saxlanır və necə silinir
 
-**Faza:** 12 · **Asılılıq:** 049 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 12 · **Əvvəl bitməli:** 049
 
-## Məqsəd
-Hər məlumat növünün nə qədər saxlandığı və istifadəçi silinməsinin necə işlədiyi.
+## Qısaca
+Hər məlumat növünün saxlanma müddəti və istifadəçinin silinməsi qaydası.
 
-## Niyə
-- Sənəd (bölmə 7): "Mesajların, şikayətlərin, loqların, analitikanın saxlanma müddətləri və istifadəçinin silinməsi production-dan əvvəl tenant retention policy ilə təyin edilir. Bu müddətləri texniki rahatlığa əsasən müəyyən etmək olmaz; tərəfdaşın və seçilmiş bazarın tələbləri lazımdır."
-- "məlumatların silinməsi nəzərdə tutulmuş prosedur olmadan XP jurnalını pozmamalıdır."
-- GDPR və yerli qanunlar: "unudulma hüququ".
+## Niyə lazımdır?
+- Sənəd: saxlanma müddətləri **bukmekerlə** təyin olunur, "texniki rahatlığa görə" yox.
+- Qanunlar (məs. GDPR) "unudulma hüququ" tələb edir.
+- Sənəd: silmə XP jurnalını **pozmamalıdır**.
 
-## Dizayn
-`TenantConfig.retention` (021):
-| Məlumat | Açar | Nümunə (tərəfdaş təsdiqləməlidir) |
+## Ayarlar (tenant config-də)
+| Məlumat | Açar | Nümunə (bukmeker təsdiqləməlidir) |
 |---|---|---|
-| Mesajlar | `messages_days` | 180 |
-| Şikayətlər | `reports_days` | 365 |
-| Analitika | `analytics_days` | 395 |
-| Idempotency, outbox | texniki | 1–7 gün |
+| Mesajlar | `messages_days` | 180 gün |
+| Şikayətlər | `reports_days` | 365 gün |
+| Analitika | `analytics_days` | 395 gün |
+| Texniki (idempotency, outbox) | | 1–7 gün |
 
-## İstifadəçi silinməsi (ziddiyyət: ledger dəyişdirilməzdir)
-**Psevdonimləşdirmə** strategiyası:
-- `users.external_user_id` → təsadüfi dəyər, `nickname` → "Deleted user", `status = deleted`;
-- mesaj mətnləri → silinir (və ya "[silinib]");
-- ledger qeydləri **qalır** (user_id artıq heç kimə bağlanmır), mühasibat bütövlüyü qorunur.
+## Ziddiyyət: istifadəçini silmək, amma jurnal silinməz
+**Həll: "anonimləşdirmə"**
+- İstifadəçinin bukmeker ID-si → təsadüfi dəyər, adı → "Deleted user", status → `deleted`.
+- Mesaj mətnləri → silinir.
+- Jurnal sətirləri **qalır**, amma artıq heç kimə bağlı deyil. Hesablar düz qalır.
 
-## Necə edəcəksən
-1. Gecəlik job (049): hər tenant üçün retention qaydalarını tətbiq et. Batch-lərlə sil (bir dəfəyə milyonlarla sətir silmə: lock, WAL).
-2. `POST /admin/users/{id}/erase` və ya tərəfdaşdan webhook (113 genişlənməsi). Kim başladır? Tərəfdaşla razılaşdırılmalıdır.
-3. Loglar (011) da retention-a tabedir, amma bu, infrastruktur səviyyəsidir (128).
+## Nə edəcəksən
+1. Gecə fon işi: hər tenant üçün qaydaları tətbiq et. **Hissə-hissə** sil (milyon sətri birdən silmək bazanı kilidləyir).
+2. Silməni kim başladır? Admin endpoint-i və ya bukmekerdən bildiriş. Bukmekerlə razılaşdırılmalıdır.
 
-## Qəbul meyarları
-- [ ] Retention job köhnə mesajları silir, yeniləri saxlayır.
-- [ ] Silinmiş istifadəçinin ledger qeydləri qalır, şəxsi məlumatları yoxdur.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Fon işi köhnə mesajları silir, yeniləri saxlayır.
+- [ ] Silinmiş istifadəçinin jurnal sətirləri qalır, şəxsi məlumatı yoxdur.
 
-## Açıq suallar
-- Konkret müddətlər tərəfdaşdan gəlməlidir.
+## Açıq sual
+Konkret müddətlər bukmekerdən gəlməlidir.

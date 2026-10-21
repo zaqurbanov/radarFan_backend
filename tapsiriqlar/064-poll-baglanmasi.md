@@ -1,23 +1,22 @@
-# 064 — Poll-un bağlanması
+# 064 — Sorğunun bağlanması
 
-**Faza:** 4 · **Asılılıq:** 062, 049 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 062, 049
 
-## Məqsəd
-Poll vaxtında bağlansın və bağlandıqdan sonra səs qəbul etməsin.
+## Qısaca
+Sorğu vaxtında bağlansın, sonra səs qəbul etməsin.
 
-## Niyə
-Sənəd (bölmə 4): "Poll hadisə bitdikdə, ləğv edildikdə və ya closes_at vaxtında bağlanır."
+## Nə vaxt bağlanır (sənəddən)
+- Matç bitəndə;
+- matç ləğv olunanda;
+- `closes_at` vaxtı çatanda.
 
-## Necə edəcəksən
-1. Üç tetikləyici:
-   - event `finished` (feed upsert, 027),
-   - event `cancelled`,
-   - `closes_at` vaxtı (gecikmiş job, 049).
-   Hər üçü eyni `closePoll(pollId, reason)` funksiyasını çağırsın. İdempotent: artıq bağlıdırsa, heç nə.
-2. Səs yoxlaması (062) `status` və `closes_at`-ı **ikisini də** yoxlayır. Job gecikə bilər.
-3. Bağlananda `poll.updated` (status: closed). Hamıya nəticələr göstərilsinmi, səs verməyənlərə də? Məntiqli: bəli, bağlanandan sonra hamıya. Qərar ver.
-4. Matç `postponed` → poll açıq qalır? `closes_at` yenilənir?
+## Nə edəcəksən
+1. Üç hal **eyni** funksiyanı çağırsın: `sorğunu_bağla(id, səbəb)`. Artıq bağlıdırsa → heç nə etmə.
+2. Səs vermə (062) həm statusu, **həm də** `closes_at`-ı yoxlasın. Fon işi gecikə bilər, buna arxalanma.
+3. Bağlananda hamıya bildiriş.
+4. Qərar ver: bağlanandan sonra nəticələri **hamı** görsünmü (səs verməyənlər də)?
+5. Matç təxirə salınsa → sorğu açıq qalır? `closes_at` dəyişir?
 
-## Qəbul meyarları
-- [ ] Event finished olanda poll bağlanır və hadisə yayılır.
-- [ ] `closes_at`-dan sonra səs → 409, hətta job hələ işləməyibsə də.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Matç bitəndə sorğu bağlanır, bildiriş gedir.
+- [ ] `closes_at`-dan sonra səs → 409, fon işi hələ işləməsə belə.

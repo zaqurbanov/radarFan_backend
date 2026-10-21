@@ -1,24 +1,25 @@
-# 096 — "Найди пару": server tərəfi lazımdırmı?
+# 096 — "Найди пару": backend lazımdırmı?
 
-**Faza:** 7 · Digər oyunlar · **Asılılıq:** 119 (analitika) · **Status:** [ ]
+**Status:** [ ] · **Faza:** 7 · **Əvvəl bitməli:** 119 (analitika)
 
-## Məqsəd
-"Найди пару" mini-oyunu üçün backend-in nə edəcəyinə (və nə etməyəcəyinə) qərar vermək.
+## Qısaca
+Bu oyun üçün backend-in nə edəcəyinə (və nə **etməyəcəyinə**) qərar ver.
 
-## Niyə
-Sayt: "Открой две карточки с одинаковым символом. · 0 ходов", 8 kart, "**Тренировка без наград и ставок.**" Oyunlar siyahısında: "Одиночная тренировка".
-
+## Saytda
+"Открой две карточки с одинаковым символом", 8 kart, "**Тренировка без наград и ставок**".
 Mükafat yoxdur, rəqib yoxdur, nəticə heç yerə yazılmır. Bu, **tamamilə frontend oyunudur**.
 
-## Mentor sualı
-Səndən yeni cədvəl və endpoint yaratmağı gözləmirəm. Bu task-ın dərsi: **hər şeyə backend lazım deyil**. Lazımsız backend = lazımsız saxlama, test, təhlükəsizlik səthi.
+## Bu task-ın dərsi
+**Hər şeyə backend lazım deyil.** Lazımsız backend = lazımsız baza, test, təhlükəsizlik problemi.
 
-Backend-in edə biləcəyi minimal şeylər:
-1. Oyunun aktiv olub-olmaması: `TenantConfig.enabled_features.find_pair` (021).
-2. Analitika: `game_started`/`game_completed` { game: "find_pair", moves, duration } (119). Məhsul komandası oyunun istifadə olunub-olunmadığını bilmək istəyəcək.
-3. Gələcəkdə mükafat əlavə olunsa → onda server tərəfi lazımdır (nəticə serverdə yoxlanmalıdır, çünki müştəri "1 hərəkətdə qazandım" yaza bilər). Bu, Quiz Battle-dakı kimi server-authoritative dizayn tələb edir.
+## Backend-in edəcəyi (minimal)
+1. Oyunu açıb-söndürmək: tenant ayarında `find_pair: true/false` (021).
+2. Analitika: "oyun başladı / bitdi, neçə hərəkət" (119). Məhsul komandası oyunun oynanıb-oynanmadığını bilmək istəyəcək.
 
-## Qəbul meyarları
-- [ ] Feature flag config-dədir.
-- [ ] Analitika hadisəsi qəbul olunur (119-dan sonra).
-- [ ] "Mükafat əlavə olunsa nə dəyişməlidir" barədə qısa qeyd yazılıb (sənin sözlərinlə).
+## Fikirləş
+Sabah bu oyuna **mükafat** əlavə olunsa, nə dəyişməlidir? (İpucu: frontend "1 hərəkətdə qazandım" yaza bilər. Viktorinada nəyi serverdə yoxlayırdıq?) Öz sözlərinlə qısa yaz.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Oyunun açıq/bağlı bayrağı ayardadır.
+- [ ] Analitika hadisəsi qəbul olunur.
+- [ ] "Mükafat əlavə olunsa" sualına cavabın yazılıb.

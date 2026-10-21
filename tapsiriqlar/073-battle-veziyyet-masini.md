@@ -1,86 +1,69 @@
-# 073 — Battle vəziyyət maşını (state machine)
+# 073 — Duelin vəziyyətləri (kod yazmazdan əvvəl plan)
 
-**Faza:** 5 · **Asılılıq:** 072 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 5 · **Əvvəl bitməli:** 072
 
-## Məqsəd
-Battle-ın bütün vəziyyətlərini və keçidlərini kod yazmazdan əvvəl dəqiq təyin etmək.
+## Qısaca
+Duelin bütün vəziyyətlərini və hansından hansına keçmək olar, **əvvəlcə kağızda** dəqiq yaz.
 
-## Niyə
-Battle-da çoxlu "nə olar əgər" var: iki tab, reload, şəbəkə qopması, gec cavab, iki dəfə "finish". Sənəd (bölmə 5): "Vəziyyət serverdə saxlanır və yenidən yüklənəndə bərpa edilir... Dublikatlar, iki cihazdan tamamlama və səhifənin yenidən açılması qaydalardan yayınmağa imkan vermir."
-
-Vəziyyət maşını olmadan bu, `if`-lər cəngəlliyinə çevrilir.
+## Niyə lazımdır?
+Duel-də çoxlu "bəs əgər..." var: iki tab, səhifəni yeniləmək, internet kəsilməsi, gec cavab, iki dəfə "bitir" basmaq. Sənəd: bunların heç biri qaydaları pozmamalıdır.
+Plan olmasa, kod `if`-lər cəngəlliyinə çevrilir.
 
 ## Vəziyyətlər
-Battle səviyyəsi: `active` → `completed` | `abandoned`
-Sual səviyyəsi (battle daxilində, hər sual üçün): `pending` → `open` → `closed`
+**Duel:** `active` → `completed` (bitdi) və ya `abandoned` (tərk edildi)
+**Hər sual:** `pending` (gözləyir) → `open` (açıqdır) → `closed` (bağlıdır)
 
 ```
-battle.created ──► Q1.open ──(cavab və ya deadline)──► Q1.closed
-                     │                                    │
-                     │                     ("Növbəti" və ya 10 san.)
-                     ▼                                    ▼
-                                                     Q2.open ... Q3.closed
-                                                                   │
-                                          ("Завершить баттл" və ya avtomatik)
-                                                                   ▼
-                                                              completed (XP)
-   5 dəq. bağlantısız ──► abandoned (XP yox)
+Duel yarandı → Sual 1 açıq → (cavab və ya vaxt bitdi) → Sual 1 bağlı
+     → ("Növbəti" və ya 10 san.) → Sual 2 açıq → ... → Sual 3 bağlı
+     → ("Завершить баттл") → completed (XP verilir)
+
+5 dəqiqə əlaqə yoxdur → abandoned (XP yoxdur)
 ```
 
 ## Cədvəllər
 **`battles`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | |
-| tenant_id | uuid | |
-| user_id | uuid FK | demo-da bir iştirakçı (2-ci mərhələdə `battle_participants`, 129+) |
-| mode | enum(`demo`, `real`) | |
-| state | enum(`active`, `completed`, `abandoned`) | |
-| rules_version | int | start zamanı sabitlənir |
-| rules_snapshot | jsonb | xp_per_correct, coins_per_correct, time_limit, ... (start anında) |
-| daily_key | varchar(10) | `2026-10-19` tenant timezone-u ilə (080) |
-| xp_eligible | boolean | gündəlik limitə düşürmü (080) |
-| bot_correct_index | smallint | botun düzgün cavab verdiyi sual (0..2) |
-| current_index | smallint | |
-| user_score, bot_score | smallint | |
-| result | enum(`victory`, `draw`, `defeat`) NULL | |
-| started_at, completed_at | timestamptz | |
-| last_activity_at | timestamptz | abandoned üçün (081) |
-
-Partial UNIQUE (`tenant_id`, `user_id`) WHERE `state = 'active'`. Sənəd: "İstifadəçinin tenant başına yalnız bir aktiv dueli ola bilər".
-Index (`tenant_id`, `user_id`, `state`). Sənəd bunu tələb edir.
-
-**`battle_questions`**
-| Sütun | Tip |
+| Sütun | İzah |
 |---|---|
-| battle_id | uuid FK |
-| index | smallint (0..2) |
-| question_version_id | uuid FK |
-| option_order | jsonb (qarışdırılmış sıra) |
-| state | enum(`pending`, `open`, `closed`) |
-| opened_at, deadline_at, closed_at | timestamptz NULL |
+| id, tenant_id, user_id | |
+| mode | `demo` / `real` |
+| state | `active` / `completed` / `abandoned` |
+| rules_version, rules_snapshot | **başlayanda** qaydalar (XP, coin, vaxt) |
+| daily_key | gün (`2026-10-21`), gündəlik limit üçün |
+| xp_eligible | XP verəcəkmi (gündəlik limit) |
+| bot_correct_index | bot hansı suala düzgün cavab verəcək (0, 1, 2) |
+| current_index | cari sual |
+| user_score, bot_score | xallar |
+| result | `victory` / `draw` / `defeat` |
+| started_at, completed_at, last_activity_at | |
 
-PK (`battle_id`, `index`).
+- **Qayda:** bir istifadəçinin bir **aktiv** duel-i. Partial unique index: (`tenant_id`, `user_id`) yalnız `state = active` olanda.
 
-**`battle_answers`** (sənəd: BattleAnswer)
-| Sütun | Tip |
+**`battle_questions`**: hər duelin 3 sualı
+| Sütun | İzah |
 |---|---|
-| battle_id | uuid |
-| user_id | uuid |
-| question_index | smallint |
-| option_id | varchar(10) |
-| request_id | uuid |
-| received_at | timestamptz |
-| correct | boolean |
+| battle_id, index (0–2) | əsas açar |
+| question_version_id | hansı sualın hansı versiyası |
+| option_order | variantların qarışdırılmış sırası |
+| state | `pending` / `open` / `closed` |
+| opened_at, deadline_at, closed_at | |
 
-PK (`battle_id`, `user_id`, `question_index`). Sənəd: "istifadəçinin question-ı üçün bir cavab".
+**`battle_answers`**: cavablar
+| Sütun | İzah |
+|---|---|
+| battle_id, user_id, question_index | əsas açar (bir suala bir cavab) |
+| option_id | seçilən |
+| request_id | təkrar sorğunu tanımaq üçün |
+| received_at | serverə çatma vaxtı |
+| correct | düzgündürmü |
 
-## Necə edəcəksən
-1. Keçid funksiyaları yaz: `openQuestion`, `submitAnswer`, `closeQuestion`, `advance`, `complete`, `abandon`. Hər biri **əvvəlki vəziyyəti yoxlayır**, uyğun deyilsə xəta. Tranzaksiya + `SELECT ... FOR UPDATE` battle sətri üzərində.
-2. Bu funksiyalar HTTP-dən asılı olmasın (sonra job-lar da çağıracaq).
-3. "State machine" və "optimistic vs pessimistic locking" mövzularını öyrən.
-4. Diaqramı (yuxarıdakı) özün yenidən çək və mənimlə müzakirə et. Kod yazmazdan əvvəl.
+## Nə edəcəksən
+1. Keçid funksiyaları: `sualı_aç`, `cavabı_qəbul_et`, `sualı_bağla`, `növbəti`, `bitir`, `tərk_edilmiş_et`.
+2. Hər funksiya **əvvəlcə cari vəziyyəti yoxlayır**. Uyğun deyilsə → xəta.
+3. Hər funksiya tranzaksiyada işləyir və duel sətrini kilidləyir (`FOR UPDATE`).
+4. Bu funksiyalar HTTP-dən asılı olmasın. Sonra fon işləri də onları çağıracaq.
+5. **Diaqramı özün yenidən çək və kod yazmazdan əvvəl mənə göstər.**
 
-## Qəbul meyarları
-- [ ] Hər keçid üçün unit test: düzgün vəziyyətdən keçir, səhv vəziyyətdən xəta.
-- [ ] Bir istifadəçinin iki aktiv battle-ı DB səviyyəsində mümkün deyil.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Hər keçid üçün test: düzgün vəziyyətdən keçir, səhvdən xəta verir.
+- [ ] Bir istifadəçinin iki aktiv duel-i DB səviyyəsində mümkün deyil.

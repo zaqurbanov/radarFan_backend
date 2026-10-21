@@ -1,30 +1,42 @@
-# 128 — Mühitlər, backup və buraxılış prosesi
+# 128 — Mühitlər, ehtiyat nüsxə, buraxılış
 
-**Faza:** 12 · **Asılılıq:** 127 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 12 · **Əvvəl bitməli:** 127
 
-## Məqsəd
-Staging və production mühitləri, ehtiyat nüsxə və təhlükəsiz buraxılış.
+## Qısaca
+Staging və production mühitləri, ehtiyat nüsxə və təhlükəsiz buraxılış qaydası.
 
-## Niyə
-Sənəd (bölmə 10): "Mühitlər: local demo, test tərəfdaşı ilə staging və production. Məlumatlar və açarlar ayrılır. Miqrasiyalar versiyalanır; buraxılışın geri qaytarılması yeni XP qeydlərini pozmur. Ehtiyat nüsxə və bərpa testi production hazırlığına daxildir; RPO və RTO tərəfdaşın infrastrukturu ilə razılaşdırılır."
-"Konkret kitabxanaları və hostinqi proqramçı tərəfdaşın mühiti daxilində seçir."
+## Mühitlər
+| | Lokal | Staging | Production |
+|---|---|---|---|
+| APP_MODE | demo | demo və ya production | production |
+| Matç mənbəyi | demo | bukmekerin test mənbəyi | real |
+| Açarlar | lokal | ayrı | ayrı, secret manager-də |
+| Baza | Docker | ayrı server | ayrı server + ehtiyat nüsxə |
 
-## Necə edəcəksən
-1. **Mühitlər:**
-   | | local | staging | production |
-   |---|---|---|---|
-   | APP_MODE | demo | demo / production | production |
-   | Feed | demo | tərəfdaşın test feed-i | real |
-   | Açarlar | lokal | ayrı | ayrı, secret manager |
-   | DB | docker | ayrı instansiya | ayrı, backup ilə |
-2. **Migration və geri qaytarma:** "buraxılışın geri qaytarılması yeni XP qeydlərini pozmur". Bu o deməkdir ki, kodu geri qaytaranda DB-ni geri qaytarmırsan. Ona görə migration-lar **geriyə uyğun** olmalıdır (expand/contract, 007): əvvəl sütun əlavə et (köhnə kod işləyir), sonra kodu dəyiş, sonra köhnə sütunu sil (ayrı buraxılış).
-3. **Backup:** Postgres üçün avtomatik gündəlik snapshot + WAL arxivi (point-in-time recovery). Redis əsasən keşdir, amma BullMQ job-ları oradadır (AOF persistence).
-4. **Bərpa testi:** backup-dan staging-ə bərpa et və sistemin işlədiyini yoxla. Yoxlanmamış backup = backup yoxdur.
-5. **RPO/RTO:** "nə qədər məlumat itirə bilərik / nə qədər müddətə dayana bilərik", tərəfdaşla razılaşdırılmalıdır.
-6. **Buraxılış təlimatı** (`docs/RELEASE.md`): addımlar, migration sırası, smoke test, geri qaytarma.
-7. Zero-downtime deploy: WS bağlantıları (043, 1012 close kodu), graceful shutdown (002).
+## Vacib qaydalar
 
-## Qəbul meyarları
-- [ ] Staging mühiti işləyir.
-- [ ] Backup-dan bərpa ən azı bir dəfə sınanıb və sənədləşdirilib.
+### Migration-lar geriyə uyğun olmalıdır
+Sənəd: "buraxılışı geri qaytarmaq yeni XP qeydlərini pozmamalıdır". Yəni kodu geri qaytaranda **bazanı geri qaytarmırsan**.
+Ona görə dəyişikliyi 3 addımda et:
+1. Yeni sütun **əlavə et** (köhnə kod işləməyə davam edir);
+2. Kodu dəyiş;
+3. Köhnə sütunu **sil** (ayrı buraxılışda).
+
+### Ehtiyat nüsxə
+- Postgres: gündəlik avtomatik nüsxə + istənilən ana qayıtmaq imkanı (point-in-time recovery).
+- **Bərpanı yoxla:** nüsxədən staging-ə bərpa et və işlədiyini gör. **Yoxlanmamış nüsxə = nüsxə yoxdur.**
+- Nə qədər məlumat itirə bilərik (RPO) və nə qədər dayana bilərik (RTO): bukmekerlə razılaşdır.
+
+### Production-da DB portu
+DB üçün **heç bir port açma**. Backend DB-yə Docker-in daxili şəbəkəsi ilə servis adı ilə qoşulsun (`postgres:5432`). Docker Linux-da firewall (`ufw`) qaydalarını keçə bilər!
+
+### Fasiləsiz buraxılış
+WebSocket bağlantıları (043, 1012 kodu) və graceful shutdown (002).
+
+## Nə edəcəksən
+`docs/RELEASE.md`: buraxılış addımları, migration sırası, yoxlama, geri qaytarma.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Staging işləyir.
+- [ ] Ehtiyat nüsxədən bərpa ən azı bir dəfə yoxlanıb və yazılıb.
 - [ ] `docs/RELEASE.md` var.

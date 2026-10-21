@@ -1,45 +1,47 @@
-# 119 — Analitika hadisələri
+# 119 — Analitika: istifadəçi hərəkətlərini toplamaq
 
-**Faza:** 11 · Analitika · **Asılılıq:** 012 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 11 · **Əvvəl bitməli:** 012
 
-## Məqsəd
-Məhsul hipotezini yoxlamaq üçün istifadəçi hərəkətlərini toplamaq.
+## Qısaca
+Məhsulun işləyib-işləmədiyini ölçmək üçün istifadəçi hərəkətlərini topla.
 
-## Niyə
-- Sənəd (bölmə 1): "Əsas məhsul hipotezi: icmada və oyun mexanikalarında iştirak istifadəçilərin geri qayıtmasını və tərəfdaşın idman hadisələrinə şüurlu keçidlərin sayını artırır."
-- Bölmə 11: "Minimum analitika: app_opened, tab_viewed, match_viewed, match_saved, room_entered, message_sent, poll_voted, battle_started, battle_completed, challenge_claimed, outcome_selected, handoff_requested, betslip_opened, handoff_failed. Payload: analitika event_id-si, timestamp, tenant_id, pseudonymous_user_id, session_id, experiment_variant; mövcud olduqda match_id, room_id, battle_id, correlation_id."
-- "Təkrarlar event_id əsasında aradan qaldırılır. Analitikada mesaj mətni, launch tokens, email və telefon olmur. Razılıq və məlumat toplama rejimi tərəfdaşın siyasəti ilə müəyyən edilir."
+## Niyə lazımdır?
+Məhsulun əsas fərziyyəsi: "çat və oyunlar insanları geri qaytarır və bukmekerə daha çox keçid gətirir". Bunu **rəqəmlə** sübut etmək lazımdır.
 
-Saytdan əlavələr: `story_viewed`, `game_started` (find_pair, predictions), `prediction_created`, `shop_item_purchased`, `item_equipped`.
+## Hadisələr (sənəddən)
+`app_opened`, `tab_viewed`, `match_viewed`, `match_saved`, `room_entered`, `message_sent`, `poll_voted`, `battle_started`, `battle_completed`, `challenge_claimed`, `outcome_selected`, `handoff_requested`, `betslip_opened`, `handoff_failed`.
 
-## Cədvəl
-**`analytics_events`**
-| Sütun | Tip |
+Saytdan əlavə: `story_viewed`, `game_started`, `prediction_created`, `shop_item_purchased`, `item_equipped`.
+
+## Analitikaya **heç vaxt** düşməməlidir
+Mesaj mətni, token-lər, email, telefon.
+
+## Yeni cədvəl: `analytics_events`
+| Sütun | İzah |
 |---|---|
-| event_id | uuid PK (dedup) |
-| tenant_id | uuid |
-| pseudonymous_user_id | varchar(64) |
-| session_id | uuid |
-| name | varchar(50) |
-| occurred_at | timestamptz (müştəri vaxtı) |
-| received_at | timestamptz (server vaxtı) |
-| experiment_variant | varchar(50) NULL |
-| context | jsonb (match_id, room_id, battle_id, correlation_id, ...) |
-| source | enum(`client`, `server`) |
+| event_id | frontend-in verdiyi unikal ID (dublikatı atmaq üçün) |
+| tenant_id | |
+| pseudonymous_user_id | gizlədilmiş istifadəçi ID-si (aşağıda) |
+| session_id | |
+| name | hadisənin adı |
+| occurred_at | baş verdiyi vaxt (frontend) |
+| received_at | serverə çatdığı vaxt |
+| experiment_variant | A/B test variantı |
+| context | matç, otaq, duel ID-si və s. (JSON) |
+| source | `client` / `server` |
 
-Cədvəl çox böyüyəcək. Postgres-də vaxta görə **partitioning** (aylıq) haqqında oxu. Gələcəkdə analitika anbarına (ClickHouse, BigQuery) export.
+Bu cədvəl **çox böyüyəcək**. Postgres-də aylıq bölmə (partitioning) haqqında oxu.
 
 ## Endpoint
-`POST /analytics/events` → `{ events: [...] }` (batch, maks. 50). Frontend hadisələri yığıb göndərir.
+`POST /analytics/events` → `{ events: [...] }` (bir dəfədə maks. 50).
 
-## Necə edəcəksən
-1. `pseudonymous_user_id`: daxili `user_id` deyil, `HMAC(secret, tenant_id + user_id)`. Niyə? Analitika məlumatı sızsa, istifadəçiyə birbaşa bağlanmasın, amma D1/D7 hesablamaq üçün sabit qalsın.
-2. Hadisə adları **whitelist**. Naməlum ad → at.
-3. `context`-də icazəli açarlar whitelist. Müştəri `text` göndərsə belə saxlanmasın.
-4. Insert `ON CONFLICT (event_id) DO NOTHING`.
-5. Razılıq (consent): tenant config-də `analytics.enabled`; launch token-də istifadəçi razılığı? Tərəfdaşla razılaşdırılmalıdır.
+## Nə edəcəksən
+1. **Gizlədilmiş ID:** daxili `user_id` yox, onun gizli açarla hash-i. Niyə? Analitika sızsa, insanlara birbaşa bağlanmasın. Amma eyni istifadəçinin hərəkətlərini izləmək mümkün qalsın.
+2. Hadisə adları **icazəli siyahıdan**. Tanımadığını at.
+3. `context`-də yalnız icazəli açarlar. Frontend `text` göndərsə belə saxlama.
+4. Eyni `event_id` → `ON CONFLICT DO NOTHING`.
 
-## Qəbul meyarları
+## Hazır olduğunu necə yoxlayarsan
 - [ ] Eyni `event_id` iki dəfə → bir sətir.
 - [ ] `context.text` saxlanmır.
-- [ ] Analitika cədvəlində heç bir yerdə `external_user_id` yoxdur.
+- [ ] Cədvəldə heç yerdə `external_user_id` yoxdur.

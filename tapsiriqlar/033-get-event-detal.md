@@ -1,26 +1,28 @@
-# 033 — `GET /events/{id}`
+# 033 — Bir matçın səhifəsi: `GET /events/{id}`
 
-**Faza:** 2 · **Asılılıq:** 030 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 030
 
-## Məqsəd
-Bir matçın tam məlumatı: event, bütün market-lər, otaq xülasəsi.
+## Qısaca
+Bir matçın tam məlumatı: matç, bütün bazarlar, statistika, otaq xülasəsi.
 
-## Niyə
-- Sənəd (bölmə 8): `GET /events/{id}` → `event, markets, room_summary`.
-- Sayt: "Центр матча" ekranı (hesab, dəqiqə, demo-statistika, əmsallar, "Пульс комьюнити" son mesaj, "Обсудить матч", "Пройти баттл"). Kupondan qayıdanda kartın bərpası üçün də lazımdır (bölmə 2).
+## Saytda
+"Центр матча": hesab, dəqiqə, statistika, əmsallar, çatın son mesajı, "Обсудить матч", "Пройти баттл" düymələri.
 
 ## Cavab
-- `event`: lentdəki kart ilə eyni sahələr (eyni serializer istifadə et!)
-- `markets[]` (outcomes ilə)
-- `stats` (task 034)
-- `room_summary`: { room_id, active_users, last_message: { nickname, text, created_at } | null, poll_id } (task 050–059-dan sonra doldurulur)
+- `event`: lentdəki kartla **eyni forma**
+- `markets`: bütün bazarlar, nəticələrlə
+- `stats`: statistika (task 034)
+- `room_summary`: otaq ID-si, aktiv say, son mesaj (çat hazır olanda, 050–058)
 - `is_favorite`
 
-## Necə edəcəksən
-1. Event-i həm `id`, həm `tenant_id` ilə axtar. Başqa tenant-ın event-i → **404**, 403 yox. Niyə? (403 "bu mövcuddur, amma sənin deyil" məlumatını verir.)
-2. Lent kartı və detal üçün ortaq `serializeEvent()`. İki yerdə fərqli format = frontend xətası.
-3. `id` UUID formatında deyilsə → 400 (params validasiyası), yoxsa Postgres xətası 500 verir.
+## Nə edəcəksən
+1. Matçı həm `id`, həm `tenant_id` ilə axtar.
+2. Lent kartı və bu səhifə üçün **bir** formatlama funksiyası yaz. İki yerdə fərqli format = frontend-də xəta.
+3. `id` UUID deyilsə → 400 (yoxsa Postgres 500 verər).
 
-## Qəbul meyarları
-- [ ] Başqa tenant-ın event id-si → 404.
-- [ ] Etibarsız UUID → 400.
+## Diqqət: başqa tenant-ın matçı → 404, 403 yox
+403 "bu var, amma sənin deyil" məlumatını verir. 404 heç nə demir. Başqasının resursu üçün həmişə 404.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Başqa tenant-ın matç ID-si → 404.
+- [ ] Səhv formatlı ID → 400.

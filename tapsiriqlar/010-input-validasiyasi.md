@@ -1,30 +1,34 @@
-# 010 — Input validasiyası
+# 010 — Gələn məlumatın yoxlanması (validasiya)
 
-**Faza:** 0 · **Asılılıq:** 009 · **Status:** [ ]
-(Köhnə `TASKS.md`: T7)
+**Status:** [ ] · **Faza:** 0 · **Əvvəl bitməli:** 009
 
-## Məqsəd
-Hər endpoint-in body, query və params-ı runtime-da yoxlansın. Etibarsız giriş 400 `INVALID_INPUT` qaytarsın.
+## Qısaca
+Hər endpoint-ə gələn məlumat (body, query, URL parametrləri) **işləmə vaxtı** yoxlansın. Səhvdirsə → `400 INVALID_INPUT`.
 
-## Niyə
-- `req.body as {launch_token: string}` yalnız TypeScript-i susdurur. Runtime-da body `null`, rəqəm, massiv ola bilər. İndi etibarsız token 500 qaytarır.
-- Sənəd (bölmə 10): "girişlərin yoxlanması" production tələbidir. Bölmə 4: mesaj validasiyası "müştəridə və serverdə eynidir".
-- Yaxşı sxemlər task 122-də (OpenAPI) avtomatik sənədə çevriləcək.
+## Niyə lazımdır?
+- `req.body as {...}` yalnız TypeScript-i susdurur. Real sorğuda body `null`, rəqəm, boş ola bilər, TS bunu bilmir.
+- İndi səhv `launch_token` göndərsən, server 500 qaytarır. 400 olmalıdır.
+- Gələcəkdə OpenAPI sənədi (task 122) bu sxemlərdən **avtomatik** yaranacaq.
 
-## Necə edəcəksən
-1. Yanaşma seç:
-   - Fastify-ın daxili JSON Schema (Ajv) + `@fastify/type-provider-typebox`;
-   - və ya `zod` + `fastify-type-provider-zod`.
-   Hər ikisi OpenAPI çıxarır. Task 001-də zod seçmisənsə, ardıcıllıq üçün zod.
-2. Hər route üçün `body`, `querystring`, `params`, `response` sxemlərini təyin et. `response` sxemi niyə vacibdir? (Səhvən artıq sahə, məs. `correct_option_id`, sızmasın — task 074!)
-3. `/events` üçün: `sport` yalnız enum dəyəri, `limit` 1–50 tam ədəd, `favorites` boolean, `cursor` string. `limitHelper` artıq lazım olmayacaq.
-4. Sxemləri modul daxilində ayrıca faylda saxla (`events.schemas.ts`).
+## Nə edəcəksən
+1. Zod artıq layihədədir (task 001). Fastify ilə işləmək üçün `fastify-type-provider-zod` paketini araşdır.
+2. Hər route üçün sxem yaz: `body`, `querystring`, `params`. **Cavab** (`response`) sxemi də yaz.
+3. `/events` üçün:
+   - `sport`: yalnız `football` və ya `basketball`;
+   - `limit`: 1–50 arası tam ədəd, default 20;
+   - `favorites`: `true`/`false`.
+   Bundan sonra `limitHelper` lazım olmayacaq.
+4. Sxemləri modulun öz faylında saxla (məs. `events.schemas.ts`).
 
-## Tələlər
-- Query-də hər şey string gəlir. `limit=10` → `"10"`. Coerce lazımdır.
-- Əlavə (naməlum) sahələri nə edirsən: atırsan, yoxsa rədd edirsən? Server `xp_delta` kimi sahələri **nəzərə almamalıdır** (bölmə 10).
+## Niyə cavab sxemi də lazımdır?
+Səhvən gizli sahə çölə çıxmasın deyə. Məsələn, viktorinada düzgün cavab (`correct_option_id`) cavaba təsadüfən düşsə, sxem onu kəsir.
 
-## Qəbul meyarları
-- [ ] `/auth/exchange` boş body ilə → 400 `INVALID_INPUT`, etibarsız token ilə → 401.
+## Diqqət
+- Query parametrləri həmişə **string** gəlir: `limit=10` → `"10"`. Rəqəmə çevirmək lazımdır (zod-da `coerce`).
+- İstifadəçi əlavə sahə göndərsə (məs. `xp: 9999`), server onu **nəzərə almamalıdır**.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] `/auth/exchange` boş body ilə → 400.
+- [ ] `/auth/exchange` səhv token ilə → 401 (500 yox).
 - [ ] `/events?sport=tennis` → 400.
-- [ ] `/events?limit=500` → 400 və ya 50-yə endirilir (qərarını yaz).
+- [ ] `/events?limit=500` → 400 və ya 50-yə endirilir (birini seç).

@@ -1,19 +1,27 @@
-# 044 — Redis pub/sub: bir neçə server instansiyası
+# 044 — Bir neçə server üçün Redis pub/sub
 
-**Faza:** 3 · **Asılılıq:** 042 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 3 · **Əvvəl bitməli:** 042
 
-## Məqsəd
-İstifadəçi A server-1-ə, istifadəçi B server-2-yə qoşulubsa, A-nın mesajı B-yə çatsın.
+## Qısaca
+İstifadəçi A **server-1**-ə, istifadəçi B **server-2**-yə qoşulub. A-nın mesajı B-yə də çatsın.
 
-## Niyə
-Sənəd (bölmə 10): tenant başına 1 000 eyni vaxtda istifadəçi, bir neçə tenant. Production-da ən azı 2 instansiya lazımdır (biri düşəndə xidmət dayanmasın). Yaddaşdakı reyestr (039) yalnız öz instansiyasının bağlantılarını bilir.
+## Niyə lazımdır?
+- Production-da ən azı 2 server olmalıdır (biri düşəndə xidmət dayanmasın).
+- Hər server yalnız **öz** bağlantılarını bilir (task 039). Server-1 bilmir ki, B server-2-dədir.
 
-## Necə edəcəksən
-1. Hər instansiya Redis-də bir pattern-ə abunə olur (`psubscribe rt:*`) və ya yalnız lokal müştərilərin abunə olduğu kanallara (`subscribe` dinamik). Hansı daha effektivdir? 1 000 otaq × 2 instansiya üçün düşün.
-2. Yayım: `publish rt:t:{tenant}:room:{id} <envelope JSON>`. Hər instansiya alır və **öz** lokal abunəçilərinə göndərir.
-3. **Diqqət:** ioredis-də abunə olan bağlantı başqa əmrlər işlədə bilmir. Pub/sub üçün **ayrıca** Redis client lazımdır.
-4. Redis pub/sub "fire and forget"-dir: instansiya o anda qoşulmayıbsa, mesaj itir. Bu, sequence + resync (048) ilə kompensasiya olunur. Alternativ: Redis Streams. Fərqlərini oxu, amma MVP üçün pub/sub + resync kifayətdir.
-5. Kontrol siqnalları da bu yolla: "sid X-in bağlantılarını bağla" (043).
+## Necə işləyir
+1. Server-1 mesajı Redis-ə **yayımlayır** (publish).
+2. Bütün serverlər Redis-dən **alır** (subscribe).
+3. Hər server mesajı öz bağlantılarına çatdırır.
 
-## Qəbul meyarları
-- [ ] Lokal olaraq iki server (`PORT=3001`, `PORT=3002`) qaldır, birinə qoşulan müştərinin mesajı digərinə qoşulana çatır.
+## Nə edəcəksən
+1. Pub/sub üçün **ayrıca** Redis bağlantısı aç. Abunə olmuş bağlantı başqa əmrlər işlədə bilmir.
+2. Kanal adına tenant əlavə et: `rt:t:{tenant}:room:{id}`. Əlavə təhlükəsizlik qatı.
+3. Logout siqnalı da bu yolla gedir: "sessiya X-in bağlantılarını bağla" (043).
+
+## Diqqət
+- Redis pub/sub "göndər və unut"-dur. Server həmin anda qoşulmayıbsa, mesaj itir. Bunu sıra nömrəsi + bərpa (048) kompensasiya edir.
+- Sənin `.env.test` dev Redis-in 1-ci bazasını istifadə edir. **Pub/sub bazalara bölünmür!** Testdə yayımlanan mesaj dev serverinə də çatacaq. Bunu bil.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] İki server qaldır (3001 və 3002 portlarında). Birinə qoşulanın mesajı digərinə qoşulana çatır.

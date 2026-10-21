@@ -1,46 +1,47 @@
-# 062 — Səsvermə: `PUT /polls/{id}/vote`
+# 062 — Səs vermək
 
-**Faza:** 4 · **Asılılıq:** 061 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 061
 
-## Məqsəd
-İstifadəçi bir səs verir, istədikdə dəyişir. Sayğaclar həmişə dəqiq qalır.
+## Qısaca
+İstifadəçi bir səs verir, istəsə dəyişir. Sayğaclar həmişə dəqiq qalır.
 
-## Niyə
-Sənəd (bölmə 4): "İstifadəçinin bağlanışadək dəyişə biləcəyi bir səsi var. Eyni option üçün təkrar sayğacı artırmır. Səsvermədən əvvəl nəticəsiz variantlar, sonra real counts və faizlər göstərilir."
-Bölmə 11: "Təkrar səs sayğacı artırmır; səsin dəyişməsi onu options arasında köçürür. Bağlanmış poll dəyişiklikləri rədd edir."
-Sayt: səsdən sonra "RM · 62% / FCB · 38%", "Твой голос учтён. Можно изменить выбор. Исходные голоса смоделированы."
+## Saytda
+Səsdən sonra: "RM · 62% / FCB · 38%", "Твой голос учтён. Можно изменить выбор."
 
-## Cədvəl
-**`poll_votes`**
-| Sütun | Tip |
+## Qaydalar (sənəddən)
+- Hər istifadəçinin **bir** səsi var, sorğu bağlanana qədər dəyişə bilər.
+- Eyni varianta təkrar səs → sayğac **artmır**.
+- Səs **verməzdən əvvəl** nəticələr görünmür.
+- Bağlı sorğu səs qəbul etmir.
+
+## Yeni cədvəl: `poll_votes`
+| Sütun | İzah |
 |---|---|
-| poll_id | uuid FK |
-| user_id | uuid FK |
-| tenant_id | uuid |
-| option_id | uuid FK → poll_options |
-| created_at, updated_at | timestamptz |
-
-PK (`poll_id`, `user_id`). "Poll istifadəçisi başına bir vote".
+| poll_id, user_id | birlikdə əsas açar (bir adam = bir səs) |
+| tenant_id | |
+| option_id | hansı variant |
+| created_at, updated_at | |
 
 ## Endpoint-lər
 | Metod | Yol | Cavab |
 |---|---|---|
-| GET | /rooms/{id}/poll | poll, my_vote, (səs veribsə) counts + percentages |
-| PUT | /polls/{id}/vote | `{ option_id }` → my_vote, counts, percentages |
+| GET | /rooms/{id}/poll | sorğu, mənim səsim, (səs vermişəmsə) nəticələr |
+| PUT | /polls/{id}/vote | `{ option_id }` → mənim səsim, saylar, faizlər |
 
-## Necə edəcəksən (tranzaksiya)
-1. Poll `open` və `closes_at > now`? Yoxsa 409 (`POLL_CLOSED`).
-2. `option_id` bu poll-a aiddir? (Başqa poll-un option-u ilə hiylə.)
-3. Mövcud səsi `SELECT ... FOR UPDATE` ilə oxu:
-   - yoxdur → insert, yeni option `+1`, total `+1`;
-   - eyni option → heç nə (idempotent);
-   - fərqli option → köhnə `-1`, yeni `+1`, total dəyişmir.
-4. `poll.version + 1`, outbox `poll.updated` (065).
-5. **Race:** iki paralel səs eyni istifadəçidən (iki tab). `FOR UPDATE` olmadan ikisi də "səs yoxdur" görüb insert edir, biri PK xətası alır, amma sayğac artıb ola bilər. Tranzaksiya sırasını düşün.
-6. **Demo:** "Исходные голоса смоделированы". Demo poll-larda başlanğıc sayğaclar seed-də (məs. 62/38 nisbətində). Real tenant-da 0-dan başlayır.
+## Addımlar (bir tranzaksiyada)
+1. Sorğu açıqdır və vaxtı keçməyib? Yoxsa → 409.
+2. `option_id` **bu** sorğuya aiddir? (Başqa sorğunun variantı ilə hiylə.)
+3. Mövcud səsi kilidlə və oxu (`FOR UPDATE`):
+   - səs yoxdur → yaz, variant +1, ümumi +1;
+   - eyni variant → heç nə etmə;
+   - fərqli variant → köhnə −1, yeni +1, ümumi dəyişmir.
+4. Sorğu versiyasını +1, outbox-a qeyd (065).
 
-## Qəbul meyarları
-- [ ] Səs ver → dəyiş → dəyiş: total 1, sayğaclar düzgün.
-- [ ] Bağlı poll-a səs → 409.
-- [ ] Səs verməmiş istifadəçi `GET` ilə counts görmür.
-- [ ] Eyni istifadəçidən 10 paralel səs → total 1.
+## Demo
+Saytda "Исходные голоса смоделированы". Demo sorğularda başlanğıc sayları seed-də qoy. Real tenant-da 0-dan başlayır.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Səs ver → dəyiş → yenə dəyiş: ümumi 1, saylar düzgün.
+- [ ] Bağlı sorğuya səs → 409.
+- [ ] Səs verməmiş istifadəçi nəticələri görmür.
+- [ ] Eyni adamdan eyni anda 10 səs → ümumi 1.

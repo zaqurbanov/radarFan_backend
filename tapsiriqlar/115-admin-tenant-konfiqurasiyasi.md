@@ -1,28 +1,30 @@
-# 115 — Admin: tenant konfiqurasiyası
+# 115 — Admin: bukmekerin ayarları
 
-**Faza:** 10 · Admin · **Asılılıq:** 017, 021 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 10 · **Əvvəl bitməli:** 017, 021
 
-## Məqsəd
-Admin öz tenant-ının brendini, funksiyalarını, qaydalarını idarə etsin.
-
-## Niyə
-Sənəd (bölmə 6): "admin öz tenant-ının konfiqurasiyasını, suallarını və redaksiya qeydlərini idarə edir. Admin interfeysindən qiymətlərin dəyişdirilməsinə icazə verilmir." "Müştəri production-da demo botunu aktivləşdirə və XP qaydalarını özü dəyişə bilməz."
+## Qısaca
+Admin öz bukmekerinin brendini, funksiyalarını, qaydalarını idarə etsin.
 
 ## Endpoint-lər
 | Metod | Yol |
 |---|---|
 | GET | /admin/config |
-| PATCH | /admin/config (branding, enabled_features, levels, ...) |
+| PATCH | /admin/config |
 | GET | /admin/config/history |
 
-## Necə edəcəksən
-1. `requireRole('admin')`, yalnız **öz** tenant-ı.
-2. Hansı sahələri admin dəyişə **bilməz**? `mode` (demo/production), `feed_provider` secret-ləri, `partner_adapter` secret-ləri. Bunlar yalnız RADAR.FAN operatorunun (super admin / DB / deploy) işidir. Sxemdə admin üçün ayrıca "editable" alt-sxem et.
-3. `economy` qaydaları dəyişəndə `rules_version + 1` (021). Aktiv battle-lar köhnə snapshot ilə bitir.
-4. Dəyişiklik tarixçəsi (audit): kim, nə vaxt, nəyi dəyişdi (diff).
-5. Keş invalidasiyası (021).
+## Admin nəyi dəyişə **bilməz**
+- `mode` (demo/production)
+- mənbə və bukmeker açarları (gizli)
+- **əmsallar** (sənəd)
+Bunlar yalnız bizim (texniki) tərəfimizdən dəyişilir. Sxemdə admin üçün ayrıca "dəyişə bilən sahələr" hissəsi et.
 
-## Qəbul meyarları
+## Nə edəcəksən
+1. Yalnız admin, yalnız **öz** tenant-ı.
+2. Oyun qaydaları dəyişəndə `rules_version + 1`. Başlamış duel köhnə qayda ilə bitir.
+3. Dəyişiklik tarixçəsi: kim, nə vaxt, nə dəyişdi (əvvəl/sonra).
+4. Keşi təmizlə (021).
+
+## Hazır olduğunu necə yoxlayarsan
 - [ ] Admin `mode`-u dəyişə bilmir.
-- [ ] XP qaydası dəyişəndə versiya artır, aktiv battle köhnə qayda ilə bitir.
-- [ ] Hər dəyişiklik auditdə.
+- [ ] XP qaydası dəyişəndə versiya artır, aktiv duel köhnə qayda ilə bitir.
+- [ ] Hər dəyişiklik tarixçədədir.

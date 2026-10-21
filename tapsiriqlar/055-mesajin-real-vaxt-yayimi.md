@@ -1,19 +1,19 @@
-# 055 — Mesajın real vaxt yayımı
+# 055 — Yeni mesaj hamıya çatsın
 
-**Faza:** 4 · **Asılılıq:** 053, 045 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 053, 045
 
-## Məqsəd
-Göndərilən mesaj otağa abunə olan hər kəsə 1 saniyə ərzində çatsın.
+## Qısaca
+Göndərilən mesaj otaqdakı hər kəsə **1 saniyədə** çatsın.
 
-## Niyə
-Sənəd (bölmə 9): `room.message.created` → `message, room_sequence`. Bölmə 10: çatdırılmanın p95-i 1 san.-dək. Bölmə 11: "A otağının mesajı B-də görünmür".
+## Mesaj
+`room.message.created` → mesajın özü + otaqdakı nömrəsi.
 
-## Necə edəcəksən
-1. Mesaj tranzaksiyasında outbox-a `channel: room:{id}`, payload: REST cavabı ilə **eyni** mesaj formatı (eyni serializer, 052).
-2. Göndərənin özü də WS ilə alacaq. Frontend `client_message_id` ilə pending mesajını sent-ə çevirir. Payload-da `client_message_id`-ni yalnız göndərənə göstərmək lazımdırmı? Başqalarına onun lazımı yoxdur, amma zərəri də yoxdur. Qərar ver.
-3. Fərdiləşdirilmiş sahələr (`liked_by_me`, `hidden_for_me`) broadcast-də olmur. Yeni mesaj üçün onsuz da false-dur.
-4. Gecikməni ölç: `emitted_at - created_at` metrik (125).
+## Nə edəcəksən
+1. Mesaj tranzaksiyasında outbox-a qeyd yaz, kanal `room:{id}`.
+2. Mesajın forması REST cavabı (052) ilə **eyni** olsun. Eyni formatlama funksiyasını istifadə et.
+3. Göndərənin özü də WebSocket ilə alacaq. Frontend `client_message_id` ilə "göndərilir..." mesajını "göndərildi"-yə çevirir.
+4. Gecikməni ölç (task 125 üçün): göndərilmə vaxtı − yaradılma vaxtı.
 
-## Qəbul meyarları
-- [ ] İki müştəri eyni otaqda: biri yazır, digəri alır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Eyni otaqda iki müştəri: biri yazır, digəri dərhal alır.
 - [ ] Başqa otağa abunə olan müştəri almır (test).

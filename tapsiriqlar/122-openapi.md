@@ -1,21 +1,22 @@
-# 122 — OpenAPI spesifikasiyası
+# 122 — API sənədi (OpenAPI / Swagger)
 
-**Faza:** 12 · **Asılılıq:** 010 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 12 · **Əvvəl bitməli:** 010
 
-## Məqsəd
-Bütün REST API-nin maşın oxunaqlı sənədi.
+## Qısaca
+Bütün REST API-nin avtomatik sənədi.
 
-## Niyə
-Sənəd (bölmə 8): "Hadisələrin və JSON modellərinin sxemi proqramçı tərəfindən OpenAPI-də sahələrin məcburiliyi, nullable və enum ilə tərtib edilir." Bölmə 11: təhvil dəstinə OpenAPI daxildir.
+## Niyə lazımdır?
+- Sənəd tələb edir: sahələrin məcburiliyi, boş ola bilənlər, icazəli dəyərlər.
+- Frontend proqramçısı hansı endpoint-in nə qəbul edib nə qaytardığını burada görür.
+- Təhvil verilən paketə daxildir.
 
-## Necə edəcəksən
-1. `@fastify/swagger` + `@fastify/swagger-ui`. Sxemlər (010) avtomatik OpenAPI-yə çevrilir. Sxemləri düzgün yazmısansa, iş az qalıb.
-2. Hər endpoint üçün: `summary`, `tags` (modul), xəta cavabları (009 kodları ilə), `security` (bearer / partner imzası).
-3. Nullable və enum-lar düzgün görünürmü? Yoxla.
-4. `/docs` yalnız demo/staging-də açıq, production-da bağlı (və ya auth ilə).
-5. Spesifikasiyanı fayl kimi export et (`openapi.json`) və repoda saxla. CI-da dəyişikliyi yoxla (127).
-6. Frontend tipləri bu fayldan generasiya edə bilər (`openapi-typescript`).
+## Nə edəcəksən
+1. `@fastify/swagger` + `@fastify/swagger-ui`. Task 010-da sxemləri düzgün yazmısansa, sənəd **avtomatik** yaranır.
+2. Hər endpoint üçün: qısa izah, bölmə (tag), xəta cavabları (009), giriş tələbi.
+3. `/docs` səhifəsi: demo və staging-də açıq, production-da bağlı.
+4. Sənədi fayl kimi saxla (`openapi.json`) və repoya əlavə et.
+5. Frontend bu fayldan tipləri avtomatik yarada bilər (`openapi-typescript`).
 
-## Qəbul meyarları
-- [ ] Bütün endpoint-lər sənəddə, hər birində ən azı bir xəta cavabı.
-- [ ] `openapi.json` repoda və aktualdır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Bütün endpoint-lər sənəddədir, hər birində ən azı bir xəta cavabı.
+- [ ] `openapi.json` repodadır və aktualdır.

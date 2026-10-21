@@ -1,36 +1,36 @@
-# 034 — Matç statistikası ("Центр матча")
+# 034 — Matç statistikası
 
-**Faza:** 2 · **Asılılıq:** 027, 033 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 027, 033
 
-## Məqsəd
-Matç mərkəzində sahiblik, zərbələr, çərçivəyə zərbələr kimi statistikanı göstərmək.
+## Qısaca
+Matç səhifəsində statistikanı göstər: topa sahiblik, zərbələr, çərçivəyə zərbələr.
 
-## Niyə
-- Sayt: "Центр матча" → "Демо-статистика": Владение 54% / 46%, Удары 12 / 9, В створ 6 / 4.
-- Sənəddə bu yoxdur (Event modelində statistika sahəsi yoxdur). Sayt əsas versiyadır, ona görə əlavə edirik. Amma real provayderin bu məlumatı verib-verməyəcəyi məlum deyil.
+## Saytda
+"Демо-статистика": Владение 54% / 46%, Удары 12 / 9, В створ 6 / 4.
 
-## Cədvəl
-**`event_stats`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| event_id | uuid PK, FK → events (cascade) | event başına bir sətir |
-| tenant_id | uuid NOT NULL | |
-| stats | jsonb NOT NULL | `[{ key: "possession", home: 54, away: 46, unit: "%" }, ...]` |
-| version | int | |
-| is_demo | boolean | "Демо-статistika" etiketi |
-| updated_at | timestamptz | |
+## Qeyd
+Bu, sənəddə **yoxdur**, saytdan gəlir. Real provayderin bunu verib-verməyəcəyi hələ məlum deyil.
 
-**Niyə jsonb?** Futbol və basketbolun statistikaları tamamilə fərqlidir (basketbolda ribaund, asist). Hər biri üçün sütun = çoxlu NULL. Statistika sorğuda filtrlənmir, yalnız göstərilir.
+## Yeni cədvəl: `event_stats`
+| Sütun | İzah |
+|---|---|
+| event_id | matç (hər matça bir sətir) |
+| tenant_id | |
+| stats | JSON siyahı: `[{ key: "possession", home: 54, away: 46 }, ...]` |
+| version | |
+| is_demo | "Демо-статистика" yazısı üçün |
+| updated_at | |
 
-## Necə edəcəksən
-1. Statistik açarların siyahısını (`possession`, `shots`, `shots_on_target`, ...) sport üzrə sabitlə. Provayderin adları normallaşdırılsın (025).
-2. Demo feed bu dəyərləri də simulyasiya etsin (026).
-3. Provayder statistika vermirsə → `stats: null`, frontend bölməni gizlədir. Saxta rəqəm göstərmə.
-4. Yenilənmə → `event.updated` WS hadisəsinə daxil etmək yoxsa ayrı `event.stats.updated`? Qərar ver (task 047).
+**Niyə JSON?** Futbol və basketbolun statistikaları tamam fərqlidir. Hər biri üçün ayrı sütun = çoxlu boş xana. Statistika üzrə axtarış etmirik, yalnız göstəririk.
 
-## Qəbul meyarları
-- [ ] Demo matçlarda `GET /events/{id}` statistikanı qaytarır, `is_demo: true`.
+## Nə edəcəksən
+1. Statistika açarlarının siyahısını idman növünə görə sabitlə.
+2. Demo provayder bunları da simulyasiya etsin (026).
+3. Statistika yoxdursa → `stats: null`. **Uydurma rəqəm göstərmə.**
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Demo matçda statistika gəlir, `is_demo: true`.
 - [ ] Statistikası olmayan matçda `stats: null`.
 
-## Açıq suallar
-- Real provayder statistika verəcəkmi? (SPEC.md, sual 4.)
+## Açıq sual
+Real provayder statistika verəcəkmi?

@@ -1,20 +1,24 @@
-# 085 — Battle XP mükafatı
+# 085 — Duel üçün XP
 
-**Faza:** 6 · **Asılılıq:** 079, 083, 084 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 079, 083, 084
 
-## Məqsəd
-079-dakı tamamlanma tranzaksiyasının XP hissəsini ledger ilə birləşdirmək və sınaqdan keçirmək.
+## Qısaca
+Duel bitəndə XP-ni jurnala düzgün yaz və ən çətin halları test et.
 
-## Niyə
-Sənəd (bölmə 5): "Tamamlanmış duel üçün hər düzgün cavaba 50 XP, maksimum 150 XP verilir." Bölmə 11: "İlk completed zamanı 0-dan 150-dək XP verilir. Nəticənin yenidən yüklənməsi, paralel sorğular və iki cihaz mükafatı ikiqat etmir."
-Sayt: 2 düzgün → "+100 XP", başlıq 50 XP → 150 XP.
+## Qayda (sənəddən)
+Hər düzgün cavab = **50 XP**, maksimum **150**. Saytda: 2 düzgün → "+100 XP".
 
-## Necə edəcəksən
-1. `amount = min(correct × rules_snapshot.xp_per_correct, max)`. Qaydalar battle-ın **snapshot-undan** (073), cari config-dən yox. Niyə? Admin oyun ortasında qaydanı dəyişsə, başlamış oyun köhnə qaydada bitməlidir.
-2. `source_type = battle`, `source_id = battle_id`, `metadata = { correct, result }`.
-3. `xp_eligible = false` → ledger-ə yazma (və ya 0), amma `awarded_xp: 0` qaytar.
-4. Ən çətin test: **"iki cihaz"**. Telefon və planşet eyni anda "Завершить баттл" basır. İki tranzaksiya: birincisi `FOR UPDATE` ilə battle-ı kilidləyir, ikincisi gözləyir, sonra `state = completed` görür və mövcud nəticəni qaytarır. Bunu test et.
+## Nə edəcəksən
+1. Miqdar = `düzgün × 50`. Qaydanı **duelin özündən** (başlayanda saxlanılan) götür, cari ayardan yox. Niyə? Admin oyun ortasında qaydanı dəyişsə, başlamış duel köhnə qayda ilə bitməlidir.
+2. Mənbə: `battle` + duel ID. Əlavə: `{ correct, result }`.
+3. `xp_eligible = false` → XP yoxdur, amma cavabda `awarded_xp: 0` qaytar.
 
-## Qəbul meyarları
+## Ən çətin test: iki cihaz
+Telefon və planşet **eyni anda** "Завершить баттл" basır.
+- Birinci tranzaksiya duel-i kilidləyir.
+- İkinci gözləyir, sonra "artıq bitib" görür və köhnə nəticəni qaytarır.
+Bunu **mütləq** test et.
+
+## Hazır olduğunu necə yoxlayarsan
 - [ ] 0, 1, 2, 3 düzgün → 0, 50, 100, 150 XP.
-- [ ] 10 paralel complete → bir ledger qeydi, balans bir dəfə artır.
+- [ ] Eyni anda 10 bitirmə → bir jurnal sətri, balans bir dəfə artır.

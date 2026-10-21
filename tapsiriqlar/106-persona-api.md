@@ -1,26 +1,25 @@
-# 106 — Persona (avatar) API
+# 106 — "Мой фан" ekranı bir sorğu ilə
 
-**Faza:** 8 · **Asılılıq:** 105, 094 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 8 · **Əvvəl bitməli:** 105, 094
 
-## Məqsəd
-"Мой фан" ekranını bir sorğu ilə qurmaq.
+## Qısaca
+"Мой фан" ekranının **bütün** məlumatını bir endpoint qaytarsın.
 
-## Niyə
-Sayt ("Мой фан"): coin balansı, personaj (geyinilmiş əşyalar), ad, səviyyə ("Начинающий фанат · 0 новых предметов"), ROI qısa kartı, mağaza, "Как заработать монеты" bloku.
+## Saytda ("Мой фан")
+Coin balansı, personaj (geyinilmiş əşyalar), ad, səviyyə ("Начинающий фанат · 0 новых предметов"), ROI qısa kartı, mağaza, "Как заработать монеты".
 
 ## Endpoint
-`GET /me/fan` → {
-- `coin_balance`,
-- `persona`: { initials, equipped: { kit, headwear, accessory, background } (asset-lərlə) },
-- `level` (094), `new_items_count` (103),
-- `prediction_summary`: { roi_percent, net_units, settled_count, pending_count } (100),
-- `earning_rules`: { starting_coins, coins_per_correct, battles_with_rewards } (tenant config-dən; "Как заработать монеты" mətni üçün)
-}
+`GET /me/fan` →
+- coin balansı;
+- personaj: baş hərflər + 4 slotda geyinilmiş əşyalar (şəkillərlə);
+- səviyyə (094), yeni əşya sayı (103);
+- proqnoz xülasəsi: ROI, nəticə, hesablanmış, gözləyən (100);
+- qazanma qaydaları: başlanğıc coin, cavab başına coin, mükafatlı duel sayı (tenant ayarından).
 
-## Necə edəcəksən
-1. Bu, "BFF" (backend for frontend) endpoint-idir: bir ekranın ehtiyacını bir sorğu ilə ödəyir. Daxildə mövcud servis funksiyalarını çağırır, yeni məntiq yazmır.
-2. Başqa istifadəçilərin personasını görmək (çatda avatar)? Hələ yox. Amma `persona`-nı ayrıca serializer et ki, gələcəkdə mesajlarda istifadə olunsun.
+## Nə edəcəksən
+1. Bu, "bir ekran = bir sorğu" (BFF) endpoint-idir. **Yeni məntiq yazmır**, mövcud funksiyaları çağırır.
+2. Personaj məlumatını ayrıca formatlama funksiyası et. Gələcəkdə çatda avatar kimi istifadə oluna bilər.
 
-## Qəbul meyarları
-- [ ] Bir sorğu "Мой фан" ekranının bütün məlumatlarını qaytarır.
-- [ ] Cavabdakı rəqəmlər ayrı endpoint-lərlə uyğundur.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Bir sorğu "Мой фан" ekranının hər şeyini qaytarır.
+- [ ] Rəqəmlər ayrı endpoint-lərlə uyğundur.

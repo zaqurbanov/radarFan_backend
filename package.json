@@ -6,10 +6,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/server.ts",
-    "build":"tsc",
+    "dev:test":"tsx watch --env-file=.env.test src/server.ts",
+    "build": "tsc",
     "start": "node dist/src/server.js",
-    "typecheck": "tsc --noEmit"
-
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx  src/db/seed.ts",
+    "db:reset": "tsx --env-file=.env src/db/reset.ts && npm run db:migrate && npm run db:seed",
+    "db:migrate:test":"node --env-file=.env.test node_modules/drizzle-kit/bin.cjs migrate",
+    "db:seed:test": " tsx --env-file=.env.test src/db/seed.ts ",
+    "db:reset:test": "tsx --env-file=.env.test src/db/reset.ts && npm run db:migrate:test && npm run db:seed:test"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +26,7 @@
     "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11",
+    "drizzle-seed": "^0.3.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"

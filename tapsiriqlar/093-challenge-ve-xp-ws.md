@@ -1,20 +1,23 @@
-# 093 — `challenge.updated` və `xp.updated` real vaxt hadisələri
+# 093 — XP və tapşırıq bildirişləri
 
-**Faza:** 6 · **Asılılıq:** 091, 092, 045 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 091, 092, 045
 
-## Məqsəd
-XP, coin və tapşırıq dəyişiklikləri istifadəçinin bütün açıq cihazlarına çatsın.
+## Qısaca
+XP, coin və tapşırıq dəyişəndə istifadəçinin **bütün açıq cihazları** bilsin.
 
-## Niyə
-Sənəd (bölmə 9): `challenge.updated` → challenge_id, task_flags, status; `xp.updated` → ledger_id, xp_balance. Kanal: `user:{id}`.
+## Bildirişlər (`user:{id}` kanalı)
+| Bildiriş | İçində |
+|---|---|
+| `xp.updated` | jurnal ID, yeni XP balansı |
+| `coins.updated` | jurnal ID, yeni coin balansı (saytdan) |
+| `challenge.updated` | tapşırıq ID, tapşırıqlar, status |
 
-Başlıqdakı XP sayğacı (saytda "50 XP" → "150 XP") hər yerdə yenilənməlidir.
+Başlıqdakı XP ("50 XP" → "150 XP") hər yerdə yenilənməlidir.
 
-## Necə edəcəksən
-1. Ledger insert ilə eyni tranzaksiyada outbox → `user:{id}`.
-2. Coin üçün ayrıca `coins.updated` { ledger_id, coin_balance } (sənəddə yoxdur, saytdan).
-3. Müştəri qaydası: `ledger_id` artıq görülübsə, at (dedup).
-4. `user:` kanalı bufer tələb edir (048). XP bildirişi itməsin.
+## Nə edəcəksən
+1. Jurnala yazanda eyni tranzaksiyada outbox-a qeyd.
+2. Frontend: eyni jurnal ID-ni ikinci dəfə görsə → atır.
+3. `user:` kanalı bərpa yaddaşı tələb edir (048). XP bildirişi itməsin.
 
-## Qəbul meyarları
-- [ ] Battle bitəndə ikinci tabdakı başlıq yeni XP-ni alır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Duel bitəndə ikinci tabdakı başlıq yeni XP-ni göstərir.

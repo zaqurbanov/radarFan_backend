@@ -1,47 +1,41 @@
-# 069 — Moderasiya jurnalı və şikayət siyahısı
+# 069 — Moderator paneli: şikayətlər və jurnal
 
-**Faza:** 4 · **Asılılıq:** 066, 067, 068 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 066, 067, 068
 
-## Məqsəd
-Moderatorlar üçün şikayət siyahısı və dəyişdirilməz əməliyyat jurnalı.
-
-## Niyə
-- Sənəd (bölmə 7): ModerationAction — actor_id, target_id, reason, action, created_at; "sonradan dəyişdirilməyən əməliyyat jurnalı".
-- Bölmə 8: `GET /moderation/reports` → cursor, status → moderator üçün şikayət siyahısı.
-- Bölmə 11 (təhvil): "Moderator üçün şikayətlərə baxış, mesaj gizlətmə və göndərməni bloklama üzrə minimal interfeys lazımdır." Bu, backend-in API hissəsidir.
-
-## Cədvəl
-**`moderation_actions`**
-| Sütun | Tip |
-|---|---|
-| id | uuid PK (audit_id) |
-| tenant_id | uuid |
-| actor_id | uuid FK (moderator) |
-| action | enum(`hide_message`, `unhide_message`, `mute_user`, `unmute_user`, `dismiss_report`, `resolve_report`) |
-| target_type | enum(`message`, `user`, `report`) |
-| target_id | uuid |
-| reason | varchar(500) NOT NULL |
-| metadata | jsonb (məs. mute müddəti) |
-| created_at | timestamptz |
-
-**"Dəyişdirilməz" necə təmin olunur?**
-- Kodda UPDATE/DELETE yoxdur (zəif);
-- DB rolu: tətbiq istifadəçisinə bu cədvəldə yalnız `INSERT, SELECT` icazəsi (`REVOKE UPDATE, DELETE`);
-- Trigger: UPDATE/DELETE-i bloklayır.
-Ən azı trigger və ya icazələrlə et.
+## Qısaca
+Moderator üçün şikayət siyahısı və **dəyişdirilə bilməyən** əməliyyat jurnalı.
 
 ## Endpoint-lər
-| Metod | Yol |
+| Metod | Yol | Nə üçün |
+|---|---|---|
+| GET | /moderation/reports | şikayət siyahısı (mətn, müəllif, şikayət sayı) |
+| POST | /moderation/reports/{id}/dismiss | şikayəti rədd et |
+| GET | /moderation/actions | jurnal |
+| GET | /moderation/users/{id} | istifadəçinin son mesajları və məhdudiyyət tarixçəsi |
+
+## Yeni cədvəl: `moderation_actions`
+| Sütun | İzah |
 |---|---|
-| GET | /moderation/reports?status&cursor (mesaj mətni, müəllif, şikayət sayı ilə) |
-| POST | /moderation/reports/{id}/dismiss |
-| GET | /moderation/actions?cursor (audit) |
-| GET | /moderation/users/{id} (istifadəçinin son mesajları, məhdudiyyət tarixçəsi) |
+| id | jurnal ID-si |
+| tenant_id | |
+| actor_id | hansı moderator |
+| action | `hide_message`, `unhide_message`, `mute_user`, `unmute_user`, `dismiss_report`, `resolve_report` |
+| target_type | `message` / `user` / `report` |
+| target_id | |
+| reason | səbəb (**məcburi**) |
+| metadata | əlavə (məs. susdurma müddəti) |
+| created_at | |
 
-## Necə edəcəksən
-1. Şikayətləri mesaj üzrə qruplaşdır: bir mesaja 10 şikayət = bir sətir, "10 şikayət".
-2. Səbəb (`reason`) məcburidir.
+## "Dəyişdirilə bilməz" necə təmin olunur?
+Kodda UPDATE yazmamaq **kifayət deyil** (sabah kimsə yazar). Bazanın özü bloklamalıdır:
+- Postgres trigger: UPDATE və DELETE-i qadağan edir;
+- və ya DB istifadəçisinə bu cədvəldə yalnız INSERT və SELECT icazəsi.
 
-## Qəbul meyarları
-- [ ] Jurnal sətrini UPDATE etmək cəhdi DB xətası verir.
+Ən azı birini et.
+
+## Nə edəcəksən
+Şikayətləri mesaj üzrə qruplaşdır: bir mesaja 10 şikayət = bir sətir "10 şikayət".
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Jurnal sətrini UPDATE etmək DB xətası verir.
 - [ ] Moderator yalnız öz tenant-ının şikayətlərini görür.

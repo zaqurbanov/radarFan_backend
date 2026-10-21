@@ -1,34 +1,30 @@
-# 084 — Balans cache və uzlaşdırma
+# 084 — Balans: tez göstər, amma yoxla
 
-**Faza:** 6 · **Asılılıq:** 083, 049 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 083, 049
 
-## Məqsəd
-Balansı hər dəfə `SUM` ilə hesablamamaq, amma cache-in ledger ilə həmişə uyğun olduğunu yoxlamaq.
+## Qısaca
+Balansı hər dəfə jurnalın cəmi ilə hesablama. Ayrıca saxla, amma vaxtaşırı jurnalla müqayisə et.
 
-## Niyə
-- Sənəd (bölmə 7): "Balance cache ledger əsasında yenilənir və fon tapşırığı ilə yoxlanılır."
-- Bölmə 10, monitorinq: "ledger/balance uyğunsuzluqları".
-- Başlıqda XP hər ekranda göstərilir. 10 000 ledger qeydinin cəmini hər sorğuda hesablamaq bahadır.
+## Niyə lazımdır?
+- XP başlıqda **hər ekranda** görünür. 10 000 sətirlik jurnalı hər dəfə toplamaq bahadır.
+- Sənəd: balans keşi jurnal əsasında yenilənir və fon işi ilə yoxlanır.
 
-## Cədvəl
-**`user_balances`**
-| Sütun | Tip |
+## Yeni cədvəl: `user_balances`
+| Sütun | İzah |
 |---|---|
-| user_id | uuid PK FK |
-| tenant_id | uuid |
-| xp | int NOT NULL default 0 |
-| coins | int NOT NULL default 0 (086) |
-| xp_ledger_last_id / version | (istəyə bağlı) |
-| updated_at | timestamptz |
+| user_id | |
+| tenant_id | |
+| xp | XP balansı |
+| coins | coin balansı (086) |
+| updated_at | |
 
-CHECK (`coins >= 0`). Mənfi coin = bug. DB bunu bloklasın (104).
+**CHECK qaydası:** `coins >= 0`. Mənfi coin = bug. Baza özü bloklasın.
 
-## Necə edəcəksən
-1. Ledger insert ilə **eyni tranzaksiyada** `UPDATE user_balances SET xp = xp + :amount`. Yalnız ledger insert həqiqətən baş veribsə!
-2. Uzlaşdırma job-u (gündə bir və ya saatda bir): `SUM(ledger)` ≠ `balance` olan istifadəçiləri tap → logla, alarm (125), avtomatik düzəlt (cache-i ledger-ə bərabərləşdir). Ledger həmişə **həqiqətin mənbəyidir**.
-3. Böyük cədvəldə bütün istifadəçiləri yoxlamaq bahadır. Yalnız son N saatda dəyişənləri yoxla.
-4. Balans sətri istifadəçi yaradılanda yaranır (exchange, 013) və ya lazy upsert.
+## Nə edəcəksən
+1. Jurnala yazanda **eyni tranzaksiyada** balansı da artır. Yalnız jurnal sətri **həqiqətən** yazılıbsa!
+2. Fon işi (gündə və ya saatda bir): jurnalın cəmi ≠ balans olan istifadəçiləri tap → logla + xəbərdarlıq + balansı jurnala bərabərləşdir. **Həqiqət həmişə jurnaldadır.**
+3. Bütün istifadəçiləri yoxlamaq bahadır. Yalnız son saatlarda dəyişənləri yoxla.
 
-## Qəbul meyarları
-- [ ] Balansı əl ilə pozub (SQL) job-u işə salanda düzəlir və logda xəbərdarlıq var.
-- [ ] Mənfi coin balansı DB tərəfindən rədd olunur.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Balansı əl ilə pozub (SQL ilə) fon işini işlədəndə düzəlir və logda xəbərdarlıq var.
+- [ ] Mənfi coin yazmaq DB xətası verir.

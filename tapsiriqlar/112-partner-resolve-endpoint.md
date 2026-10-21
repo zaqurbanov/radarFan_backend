@@ -1,37 +1,35 @@
-# 112 — Tərəfdaş endpoint-i: `POST /partner/v1/handoffs/resolve`
+# 112 — Bukmekerin serveri üçün endpoint
 
-**Faza:** 9 · **Asılılıq:** 109 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 9 · **Əvvəl bitməli:** 109
 
-## Məqsəd
-Tərəfdaşın backend-i handoff token-i bizdən seçimlərin tam məlumatına çevirsin.
+## Qısaca
+Bukmekerin serveri biletimizi seçimlərin tam məlumatına çevirsin.
 
-## Niyə
-Sənəd (bölmə 9): "Tərəfdaşın backend-i server avtorizasiyası ilə POST /partner/v1/handoffs/resolve vasitəsilə handoff-u istifadə edir; token birdəfəlikdir, TTL 60 saniyədir, yalnız qeyri-şəffaf ID ehtiva edir."
+## Endpoint
+`POST /partner/v1/handoffs/resolve` → bilet → seçimlər (bukmekerin ID-ləri, əmsal, versiya), istifadəçinin bukmekerdəki ID-si, `correlation_id`.
 
-**Niyə token "qeyri-şəffaf"dır?** Müştəri (WebView) tokendə nə olduğunu bilmir və dəyişə bilmir. Əgər token-də `outcome_id, price` açıq olsaydı, istifadəçi `price: 100.0` yazardı. Tərəfdaş məlumatı **bizim serverdən** alır, müştəridən yox.
+## Niyə bilet "mənasız"dır?
+Biletin içində `outcome_id, price` açıq olsaydı, istifadəçi onu dəyişib `price: 100` yazardı. Bukmeker məlumatı **bizim serverdən** alır, istifadəçidən yox.
 
-## Axın
-```
-Müştəri ──POST /handoffs──► RADAR.FAN  (token)
-Müştəri ──bridge OPEN_BETSLIP(token)──► Tərəfdaş app
-Tərəfdaş backend ──POST /partner/v1/handoffs/resolve(token)──► RADAR.FAN
-                  ◄── selections (provider_*_id, price, version), user (external_user_id), correlation_id
-Tərəfdaş kuponu açır
-```
+## Bu endpoint istifadəçi üçün deyil
+Burada istifadəçi token-i işləmir. Bu, **server-server** əlaqəsidir, öz yoxlaması var.
 
-## Autentifikasiya (istifadəçi deyil, server-server)
-Yeni cədvəl **`partner_api_credentials`**: id, tenant_id, key_id, secret_hash və ya public key, status, created_at, last_used_at.
-Üsul seç: HMAC imzası (body + timestamp, replay qorunması) və ya mTLS və ya OAuth client credentials. Tövsiyə: HMAC imzası + timestamp (±5 dəq.) + `key_id` başlığı.
+### Yeni cədvəl: `partner_api_credentials`
+id, tenant_id, key_id, secret_hash (və ya açıq açar), status, created_at, last_used_at.
 
-## Necə edəcəksən
-1. Ayrı route qrupu `/partner/v1`. İstifadəçi auth plugin-i (016) burada **işləməməlidir**, öz auth-u var.
-2. Token-in hash-i ilə tap, tenant uyğunluğu (partner credential-ın tenant-ı = handoff-un tenant-ı).
-3. Atomar birdəfəlik: `UPDATE handoffs SET status = 'resolved', resolved_at = now() WHERE token_hash = :h AND status = 'created' AND expires_at > now() RETURNING *`. Sətir qayıtmadı → 410/404.
-4. Cavabda `external_user_id` (tərəfdaşın öz ID-si, burada lazımdır və təhlükəsizdir, çünki server-server-dir).
-5. Rate limit və audit log.
+### Yoxlama üsulu (tövsiyə: HMAC imza)
+- Bukmeker sorğunu öz gizli açarı ilə imzalayır (body + vaxt).
+- Biz eyni açarla yoxlayırıq.
+- Vaxt ±5 dəqiqədən köhnədirsə → rədd (köhnə sorğunun təkrarına qarşı).
 
-## Qəbul meyarları
-- [ ] Token ikinci dəfə resolve olunmur.
-- [ ] 61 san. sonra → rədd.
-- [ ] Tenant A-nın credential-ı tenant B-nin handoff-unu resolve edə bilmir.
-- [ ] İmzasız və ya köhnə timestamp-li sorğu → 401.
+## Nə edəcəksən
+1. Ayrı route qrupu: `/partner/v1`. İstifadəçi auth-u (016) burada **işləməsin**.
+2. Bileti hash ilə tap. Bukmekerin tenant-ı = biletin tenant-ı?
+3. **Bir dəfəlik, atomar:** `UPDATE handoffs SET status='resolved' WHERE token_hash=... AND status='created' AND expires_at > now() RETURNING *`. Heç nə qayıtmadısa → rədd.
+4. Sürət limiti və jurnal.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Bilet ikinci dəfə işləmir.
+- [ ] 61 saniyədən sonra → rədd.
+- [ ] A bukmekeri B-nin biletini aça bilmir.
+- [ ] İmzasız və ya köhnə vaxtlı sorğu → 401.

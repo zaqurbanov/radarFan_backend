@@ -1,30 +1,28 @@
-# 063 — Faizlərin hesablanması (ən böyük qalıq üsulu)
+# 063 — Faizlərin cəmi həmişə 100 olsun
 
-**Faza:** 4 · **Asılılıq:** 062 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 062
 
-## Məqsəd
+## Qısaca
 Faizlər tam ədəd olsun və cəmi **həmişə** 100 olsun.
 
-## Niyə
-Sənəd (bölmə 4): "Total sıfırdırsa, «Hələ səs yoxdur» göstərilir. Paylar ən böyük qalıqlar üsulu ilə cəmi 100 faiz olacaq şəkildə yuvarlaqlaşdırılır. Sorğu nəticənin ehtimalını deyil, auditoriyanın fikrini əks etdirir."
+## Problem
+3 variant, hər birinə 1 səs → hər biri 33.33% → yuvarlaqlaşdır → 33 + 33 + 33 = **99**. İstifadəçi "1% hara getdi?" deyir.
 
-**Problem:** 3 variant, hər biri 1 səs: 33.33% → yuvarlaqlaşdırma → 33 + 33 + 33 = 99. İstifadəçi "99%?" deyir.
+## Həll: "ən böyük qalıq" üsulu (sənəd bunu tələb edir)
+1. Hər variant üçün dəqiq faizi hesabla: `say / ümumi × 100`.
+2. Hamısını **aşağı** yuvarlaqlaşdır, topla.
+3. Çatışmayan = `100 − cəm`.
+4. Kəsr hissəsi **ən böyük** olanlara bir-bir +1 ver, çatışmayan bitənə qədər.
+5. Kəsr hissələri bərabərdirsə: sabit qayda ilə seç (məs. variantın sırası). Yoxsa hər dəfə fərqli nəticə çıxar.
 
-## Alqoritm (Hamilton / largest remainder)
-1. Hər variant üçün dəqiq pay: `count / total * 100`.
-2. Aşağı yuvarlaqlaşdır (floor), cəmlə.
-3. Çatışmayan = `100 - cəm`.
-4. Qalıqları (kəsr hissələri) böyükdən kiçiyə sırala, çatışmayan qədər ən böyük qalıqlılara +1 ver.
-5. **Bərabər qalıqlar:** kim +1 alır? Deterministik qayda lazımdır (məs. `position` sırası). Yoxsa hər sorğuda fərqli nəticə.
+**Nümunə:** 1, 1, 1 səs → 33.33 hər biri → 33, 33, 33 = 99 → 1 çatmır → bərabərdir → sırada birinci: **34, 33, 33**.
 
-Nümunə: 1, 1, 1 → 33.33 hər biri → floor 33, 33, 33 = 99 → 1 çatışmır → qalıqlar bərabər → position-a görə birinciyə: 34, 33, 33.
+## Nə edəcəksən
+1. Bazadan asılı olmayan təmiz funksiya: `faizlər(saylar) → faizlər`.
+2. Kəsr xətalarından qaçmaq üçün tam ədədlərlə hesabla (`say × 100` bölmə və qalıq).
+3. Ümumi 0 → `null` (frontend "Hələ səs yoxdur" yazır).
+4. **Çoxlu test:** 0 səs, 1 səs, bərabər səslər, 1 milyon səs, 2 və 3 variant.
 
-## Necə edəcəksən
-1. Təmiz funksiya (pure function): `largestRemainder(counts: number[]): number[]`. DB-dən asılı deyil.
-2. Float dəqiqlik problemlərindən qaçmaq üçün tam ədədlərlə hesabla: `count * 100` / `total` → bölmə nəticəsi və qalıq (`%`).
-3. Bu funksiya üçün **çoxlu** unit test yaz: 0 səs, 1 səs, bərabər, 1 000 000 səs, 2 və 3 variant.
-4. `total = 0` → `percentages: null`.
-
-## Qəbul meyarları
-- [ ] İstənilən giriş üçün cəm 100-dür (property-based test: təsadüfi 1 000 giriş).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] İstənilən giriş üçün cəm 100-dür (1000 təsadüfi giriş ilə test).
 - [ ] Eyni giriş həmişə eyni nəticə verir.

@@ -1,49 +1,49 @@
-# 072 — Sual bankı və versiyalama
+# 072 — Viktorina sualları
 
-**Faza:** 5 · Quiz Battle · **Asılılıq:** 021 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 5 · **Əvvəl bitməli:** 021
 
-## Məqsəd
-Viktorina sualları serverdə saxlansın. Düzgün cavab heç vaxt müştəriyə vaxtından əvvəl getməsin.
+## Qısaca
+Suallar serverdə saxlansın. Düzgün cavab frontend-ə **vaxtından əvvəl** getməsin.
 
-## Niyə
-- Sənəd (bölmə 2): prototipdə "Cavablar və düzgün variant müştəri kodunda". MVP: "Cavabların yalnız serverdə yoxlanması". Kim DevTools açarsa, hər sualı bilir və XP qazanır.
-- Bölmə 7: Question — id, tenant_id, version, text, options, correct_option_id, explanation, status; "istifadədən sonra versiya dəyişməzdir".
-- Sayt sualları: "Сколько игроков одной команды на поле в футболе?" (10/11/12/9, düzgün 11, izah "11 игроков, включая вратаря"); "Сколько очков даёт бросок из-за дуги в баскетболе?" (1/2/3/4, düzgün 3); "Что такое хет-трик?" (düzgün: "Три гола одного игрока").
+## Niyə lazımdır?
+- Prototipdə suallar və düzgün cavablar **frontend kodunda** idi. DevTools açan hər kəs bütün cavabları bilir və XP qazanır.
+- Sənəd: cavablar **yalnız serverdə** yoxlanır.
 
-## Cədvəllər
+## Saytdakı suallar
+| Sual | Variantlar | Düzgün | İzah |
+|---|---|---|---|
+| Сколько игроков одной команды на поле в футболе? | 10 / 11 / 12 / 9 | 11 | 11 игроков, включая вратаря |
+| Сколько очков даёт бросок из-за дуги в баскетболе? | 1 / 2 / 3 / 4 | 3 | Точный бросок из-за дуги приносит 3 очка |
+| Что такое хет-трик? | 4 variant | Три гола одного игрока | Три гола одного игрока за матч |
+
+## İki cədvəl: sual və onun versiyaları
+**Niyə versiya?** Sənəd: "istifadədən sonra versiya dəyişməzdir". Admin sualdakı səhvi düzəldəndə **köhnə duellərin nəticəsi dəyişməməlidir**. Ona görə düzəliş = yeni versiya. Duel konkret **versiyaya** istinad edir.
+
 **`questions`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | |
-| tenant_id | uuid | |
-| sport | enum NULL | NULL = ümumi |
-| locale | varchar(10) | |
-| difficulty | smallint NULL | |
-| status | enum(`draft`, `active`, `retired`) | |
-| current_version | int | |
-| created_at, updated_at | | |
+| Sütun | İzah |
+|---|---|
+| id, tenant_id | |
+| sport | boşdursa = ümumi |
+| locale | dil |
+| status | `draft` / `active` / `retired` |
+| current_version | cari versiya |
 
 **`question_versions`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | battle bu id-yə istinad edir |
-| question_id | uuid FK | |
-| version | int | |
-| text | varchar(300) | |
-| options | jsonb | `[{id: "a", text: "10"}, ...]` 4 ədəd |
-| correct_option_id | varchar(10) | |
-| explanation | varchar(300) | |
-| created_at | | |
+| Sütun | İzah |
+|---|---|
+| id | duel buna istinad edir |
+| question_id, version | |
+| text | sual |
+| options | 4 variant (JSON: `[{id: "a", text: "10"}, ...]`) |
+| correct_option_id | düzgün variant |
+| explanation | izah |
 
-UNIQUE (`question_id`, `version`).
+Unique (`question_id`, `version`).
 
-**Niyə versiya cədvəli?** "İstifadədən sonra versiya dəyişməzdir". Admin sualdakı səhvi düzəldəndə (məs. düzgün cavab səhv idi), keçmiş battle-lar köhnə versiyaya istinad edir və nəticələri dəyişmir. Yeni battle-lar yeni versiyanı alır. **Battle `question_version_id`-yə istinad edir, `question_id`-yə yox.**
+## Nə edəcəksən
+1. Seed: saytdakı 3 sual + ən azı 20 əlavə (rus dilində). Az sual olsa, eyni suallar təkrarlanacaq.
+2. Frontend-ə gedən sual sxemində `correct_option_id` və `explanation` **olmasın** (task 010-dakı cavab sxemi).
 
-## Necə edəcəksən
-1. Option id-ləri sabit (`a`, `b`, `c`, `d`) və ya UUID. **Variantların sırasını hər battle-da qarışdırmaq** istəyirsən? Onda sıra battle-a bağlı saxlanmalıdır (073).
-2. Seed: saytdakı 3 sual + ən azı 20 əlavə (rus dilində, demo tenant locale-ı). Az sual olsa, eyni suallar təkrarlanacaq.
-3. Response sxemi (010): sual müştəriyə gedəndə `correct_option_id` və `explanation` sxemdə **yoxdur**. Səhvən sızmasın.
-
-## Qəbul meyarları
-- [ ] Sualın düzgün cavabını dəyişmək yeni versiya yaradır, köhnə battle-ların nəticəsi dəyişmir.
-- [ ] Heç bir müştəri endpoint-i açıq sual üçün `correct_option_id` qaytarmır (test).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Sualın cavabını dəyişmək yeni versiya yaradır, köhnə duellər dəyişmir.
+- [ ] Heç bir endpoint açıq sual üçün düzgün cavabı qaytarmır (test).

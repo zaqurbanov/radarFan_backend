@@ -1,37 +1,41 @@
-# 060 — Şəxsi gizlətmə ("Скрыть" / "Вернуть")
+# 060 — "Скрыть / Вернуть": yalnız özün üçün gizlətmək
 
-**Faza:** 4 · **Asılılıq:** 051 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 051
 
-## Məqsəd
-İstifadəçi istəmədiyi mesajı **yalnız özü üçün** gizlədə və geri qaytara bilsin.
+## Qısaca
+İstifadəçi istəmədiyi mesajı **yalnız özü üçün** gizlədir və geri qaytara bilir.
 
-## Niyə
-Sayt: hər mesajda "Скрыть" düyməsi. Basanda mesaj yerinə "Сообщение скрыто **Вернуть**" görünür. Bu, **moderasiya deyil** (moderasiya hamı üçün gizlədir və geri qaytarma düyməsi yoxdur, task 067). Bu, şəxsi "bu mesajı görmək istəmirəm" funksiyasıdır.
+## Saytda
+Hər mesajda "Скрыть". Basanda: "Сообщение скрыто **Вернуть**".
 
-Bunu ayırmaq vacibdir: əgər "Скрыть"-i moderasiya kimi etsən, hər istifadəçi hamı üçün mesaj silə bilər.
+## Bu, moderasiya DEYİL
+| | Şəxsi gizlətmə (bu task) | Moderasiya (067) |
+|---|---|---|
+| Kim edə bilər | Hər istifadəçi | Yalnız moderator |
+| Kimə təsir edir | Yalnız özünə | Hamıya |
+| Geri qaytarmaq | Bəli ("Вернуть") | Yalnız moderator |
 
-## Cədvəl
-**`message_user_hides`**
-| Sütun | Tip |
+Bunu qarışdırsan, hər istifadəçi **hamı üçün** mesaj silə bilər.
+
+## Yeni cədvəl: `message_user_hides`
+| Sütun | İzah |
 |---|---|
-| tenant_id | uuid |
-| user_id | uuid |
-| message_id | uuid FK (cascade) |
-| created_at | timestamptz |
+| tenant_id | |
+| user_id | kim gizlətdi |
+| message_id | hansı mesaj |
+| created_at | |
 
-PK (`user_id`, `message_id`).
+Əsas açar (`user_id`, `message_id`).
 
-## Endpoint
+## Endpoint-lər
 | Metod | Yol |
 |---|---|
 | PUT | /messages/{id}/hide-for-me |
 | DELETE | /messages/{id}/hide-for-me |
 
-## Necə edəcəksən
-1. `GET messages` (052) hər mesaj üçün `hidden_for_me: boolean`. Gizlədilibsə, mətni qaytarmaq lazımdırmı? "Вернуть" basanda frontend mətni göstərməlidir. Ya mətn qaytarılır və frontend gizlədir (bu halda təhlükəsizlik problemi yoxdur, çünki istifadəçi öz seçimidir), ya da yenidən sorğu edilir. Sadə yol: mətni qaytar.
-2. Bunun şikayətlə (066) əlaqəsi: gizlədəndə "şikayət etmək istəyirsən?" təklifi? Frontend qərarıdır.
-3. Gələcək: "bu istifadəçini gizlət" (bütün mesajları). İndi lazım deyil, qeyd et.
+## Nə edəcəksən
+`GET messages` (052) hər mesajda `hidden_for_me` qaytarsın. Mətni də qaytar ("Вернуть" basanda göstərmək üçün). Bu, istifadəçinin öz seçimidir, təhlükəsizlik problemi yoxdur.
 
-## Qəbul meyarları
-- [ ] A gizlətdiyi mesaj B üçün görünür qalır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] A-nın gizlətdiyi mesajı B görür.
 - [ ] A "Вернуть" basandan sonra mesaj yenidən görünür.

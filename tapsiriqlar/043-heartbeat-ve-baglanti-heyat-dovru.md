@@ -1,24 +1,32 @@
-# 043 — Heartbeat və bağlantının həyat dövrü
+# 043 — Ölü bağlantıları təmizləmək
 
-**Faza:** 3 · **Asılılıq:** 039, 020 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 3 · **Əvvəl bitməli:** 039, 020
 
-## Məqsəd
-Ölü bağlantılar aşkarlansın və təmizlənsin. Logout və ban zamanı bağlantılar bağlansın.
+## Qısaca
+Cavab verməyən bağlantılar tapılıb bağlansın. Logout və ban zamanı bağlantılar dərhal bağlansın.
 
-## Niyə
-Sənəd (bölmə 9): "Reconnect zamanı jitter ilə exponential backoff istifadə edilir, maksimum interval 30 saniyədir. Heartbeat hər 20 saniyədədir; 60 saniyə aktivlik olmadıqda bağlantı itirilmiş sayılır."
+## Niyə lazımdır?
+Telefonda istifadəçi başqa tətbiqə keçir. Bağlantı "yarımölü" qalır: server onu canlı sanır. Nəticə: onlayn sayğacı səhvdir, server boşuna mesaj göndərir.
 
-Mobil WebView arxa plana keçəndə (istifadəçi başqa tətbiqə keçir) TCP bağlantısı "yarımçıq ölü" qalır. Server bilməsə, o "istifadəçini" otaqda aktiv sayır (presence, 046) və mesaj göndərməyə çalışır.
+## Qaydalar (sənəddən)
+- Frontend hər **20 saniyədə** "buradayam" (`ping`) göndərir.
+- **60 saniyə** səs yoxdursa → bağlantı ölüdür.
+- Yenidən qoşulma tədricən artan gözləmə ilə olur (maks. 30 saniyə). Bu, frontend-in işidir.
 
-## Necə edəcəksən
-1. Müştəri hər 20 san. `ping` göndərir (və ya server WS ping frame-ləri). Server hər bağlantının `last_seen_at`-ını yeniləyir.
-2. Server tərəfində hər 10–15 san. yoxlama: `now - last_seen > 60s` → bağlantını bağla (close kod 4000 + səbəb).
-3. Bağlantı bağlananda: reyestrdən sil, abunələri sil, presence-dən çıxar (046).
-4. Logout (020) / ban (018) / sessiya dəyişməsi → `sid` üzrə bütün bağlantıları tap və bağla (close kod 4001 "session_ended"). Çox instansiyada bu siqnal pub/sub ilə gəlir (044).
-5. Graceful shutdown (002): bütün bağlantılara "server_restart" (1012) göndər ki, müştərilər dərhal yenidən qoşulsun.
-6. Reconnect backoff **müştərinin** işidir, amma server close kodları ilə ona ipucu verir: 4001 = yenidən qoşulma, yeni login lazımdır; 1012 = dərhal qoşul.
+## Nə edəcəksən
+1. Hər bağlantının "son görünmə" vaxtını saxla.
+2. Hər 10–15 saniyədə yoxla: 60 saniyədən köhnədirsə → bağla.
+3. Bağlantı bağlananda: siyahıdan sil, abunələri sil, onlayn sayından çıxar.
+4. Logout, ban → həmin sessiyanın **bütün** bağlantılarını tap və bağla.
+5. Server dayananda bütün bağlantılara "restart" kodu göndər ki, frontend dərhal yenidən qoşulsun.
 
-## Qəbul meyarları
-- [ ] Ping göndərməyən bağlantı 60 san. sonra bağlanır.
+## Bağlanma kodları (frontend üçün sənədləşdir)
+| Kod | Mənası | Frontend nə etsin |
+|---|---|---|
+| 4000 | Səs-səmir yox idi | yenidən qoşul |
+| 4001 | Sessiya bitdi (logout/ban) | **qoşulma**, yenidən giriş et |
+| 1012 | Server yenidən başlayır | dərhal qoşul |
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] `ping` göndərməyən bağlantı 60 saniyədən sonra bağlanır.
 - [ ] Logout-dan sonra bağlantı 4001 ilə bağlanır.
-- [ ] Close kodlarının siyahısı sənədləşdirilib (frontend üçün).

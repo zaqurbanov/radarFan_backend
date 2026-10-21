@@ -1,30 +1,32 @@
-# 098 — Proqnoz vermə: `POST /predictions`
+# 098 — Proqnoz vermək: `POST /predictions`
 
-**Faza:** 7 · **Asılılıq:** 097, 029, 036 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 7 · **Əvvəl bitməli:** 097, 029, 036
 
-## Məqsəd
-İstifadəçi outcome seçəndə `pending` proqnoz yaransın.
+## Qısaca
+İstifadəçi əmsal seçəndə "Ожидает" statuslu proqnoz yaransın.
 
-## Niyə
-Sayt: "При выборе прогноз записывается со статусом «Ожидает»."
+## Endpoint-lər
+| Metod | Yol | Nə üçün |
+|---|---|---|
+| GET | /predictions/board | proqnoz ekranı: matçlar və əmsallar |
+| POST | /predictions | `{ outcome_id, odds_version }` → proqnoz |
 
-## Endpoint
-| Metod | Yol | Body | Cavab |
-|---|---|---|---|
-| GET | /predictions/board | | proqnoz ekranı: matçlar + outcome-lar (lentin sadələşdirilmiş forması) |
-| POST | /predictions | `{ outcome_id, odds_version }` + Idempotency-Key | prediction |
+## Yoxlamalar
+(Bukmekerə keçidə (110) çox bənzəyir, kodu **paylaş**.)
+1. Funksiya açıqdır və icazə var (022).
+2. Əmsal bu tenant-dadır, bazar açıqdır, əmsal aktivdir, köhnəlməyib (029).
+3. Matç bitməyib və ləğv olunmayıb.
+4. `odds_version` cari versiyadır, yoxsa 409 `ODDS_CHANGED` + yeni qiymət.
 
-## Necə edəcəksən
-1. Yoxlamalar (handoff-a çox bənzəyir, 110):
-   - feature və entitlement aktivdir (022);
-   - outcome bu tenant-dadır, market `open`, outcome `active`, stale deyil (029);
-   - event `finished`/`cancelled` deyil;
-   - `odds_version` cari versiyaya bərabərdir, yoxsa 409 `ODDS_CHANGED` + yeni qiymət (111 ilə eyni məntiq). Kodu **paylaş**.
-2. Canlı matçda proqnoz vermək olarmı? Saytda bütün matçlar canlıdır və proqnoz verilir. Bəs 89-cu dəqiqədə, hesab 3:0 olanda? Real bukmekerlər əmsalı buna görə qoyur, amma "virtual statistika" üçün sui-istifadə riski var. Qərar ver: `proqnoz yalnız scheduled` və ya `live da olar`.
-3. Limitlər: matç başına maksimum proqnoz sayı? Gündəlik? (Spam statistikası.)
-4. Coin xərclənmir (sayt). `stake_units` sabit 100, müştəridən qəbul edilmir.
+## Qərar ver
+- **Canlı matça proqnoz olarmı?** Saytda bütün matçlar canlıdır və proqnoz verilir. Bəs 89-cu dəqiqədə, hesab 3:0 olanda? "Statistika" üçün hiylə riski var.
+- Bir matça maksimum neçə proqnoz?
 
-## Qəbul meyarları
-- [ ] Stale outcome ilə → 409.
-- [ ] Köhnə `odds_version` → 409 `ODDS_CHANGED` + yeni qiymət.
+## Diqqət
+- Coin xərclənmir (sayt).
+- `stake_units` həmişə 100. Frontend-dən **qəbul etmə**.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Köhnəlmiş əmsal → 409.
+- [ ] Köhnə versiya → 409 `ODDS_CHANGED` + yeni qiymət.
 - [ ] Coin balansı dəyişmir.

@@ -1,21 +1,17 @@
-# 057 — Otağın read_only olması
+# 057 — Bitmiş matçın otağı bağlanır
 
-**Faza:** 4 · **Asılılıq:** 050, 049 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 050, 049
 
-## Məqsəd
-Bitmiş matçın otağı 24 saat sonra yalnız oxunsun.
+## Qısaca
+Matç bitəndən **24 saat** sonra otaq "yalnız oxu" olur: tarixçə görünür, yazmaq və səs vermək olmur.
 
-## Niyə
-Sənəd (bölmə 4): "Bitmiş otaq finished_at-dan 24 saat sonra read_only olur. Tarixçə oxuna bilər, mesaj göndərmək və yeni səs vermək olmaz."
+## Nə edəcəksən
+1. İki yanaşmanı birlikdə istifadə et:
+   - **Yazanda yoxla (əsas qoruma):** `matç bitib + 24 saat < indi` → rədd et. Bu, həmişə etibarlıdır.
+   - **Fon işi (rahatlıq):** vaxt çatanda `rooms.status = read_only` et və hamıya bildiriş göndər.
+2. Ləğv olunmuş (`cancelled`) matç: otaq dərhal bağlansın? Təxirə salınmış (`postponed`)? Qərar ver.
+3. Yeni xəta kodu: `ROOM_READ_ONLY` (409).
 
-## Necə edəcəksən
-1. İki yanaşma:
-   - **Job:** event `finished` olanda `finished_at + 24h` üçün gecikmiş job (049) → `rooms.status = read_only` + WS `room.status.updated`.
-   - **Hesablanan:** `read_only = event.finished_at + 24h < now()`. Job lazım deyil, amma WS bildirişi getmir.
-   Tövsiyə: hər ikisi. Yazma zamanı **hesablanan** yoxlama (etibarlı), job isə status sütununu və bildirişi yeniləyir (rahatlıq).
-2. `cancelled` matç: otaq dərhal read_only? `postponed`? Qərar ver.
-3. Read_only otağa mesaj → 409? 403? Yeni kod `ROOM_READ_ONLY` əlavə et (009).
-
-## Qəbul meyarları
-- [ ] `finished_at`-dan 24 saat 1 dəq. sonra mesaj → rədd (vaxtı test üçün manipulyasiya et, fake timers).
-- [ ] Read_only otaqda tarixçə oxunur.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Matç bitəndən 24 saat 1 dəqiqə sonra mesaj → rədd (testdə vaxtı saxta et).
+- [ ] Bağlı otaqda tarixçə oxunur.

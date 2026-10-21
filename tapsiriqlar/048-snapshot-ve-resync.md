@@ -1,27 +1,26 @@
-# 048 — Snapshot və resync
+# 048 — Bağlantı qopanda bərpa
 
-**Faza:** 3 · **Asılılıq:** 042, 045 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 3 · **Əvvəl bitməli:** 042, 045
 
-## Məqsəd
-Müştəri bağlantını itirəndə və ya sequence-də boşluq görəndə vəziyyəti etibarlı şəkildə bərpa etsin.
+## Qısaca
+Bağlantı qopub qayıdanda və ya sıra nömrəsində boşluq görünəndə frontend vəziyyəti etibarlı bərpa etsin.
 
-## Niyə
-- Sənəd (bölmə 4): "Yenidən qoşulmada müştəri last_sequence ötürür. Server buraxılmış mesajları qaytarır və ya bərpa tarixçəsinin müddəti bitibsə, snapshot yenilənməsini tələb edir. Tətbiq background-dan qayıtdıqda da sinxronizasiya aparılır."
-- Bölmə 9: "Sequence-də boşluq olarsa, müştəri snapshot tələb edir."
-- Bölmə 11: "WS itkisi, snapshot bərpası ... yoxlanılıb".
+## Niyə lazımdır?
+- Metroda internet 10 saniyə kəsildi. Bu vaxt çatda 3 mesaj gəldi. Qayıdanda onlar görünməlidir.
+- Sənəd: frontend son gördüyü sıra nömrəsini göndərir, server buraxılanları qaytarır. Çox köhnədirsə → "tam yenidən yüklə".
 
-## Dizayn
-Abunə komandasına `since_sequence` (isteğe bağlı) əlavə et:
-- Server həmin kanal üçün buraxılmış hadisələri **qısa müddətli buferdən** (Redis list/stream, son N hadisə və ya son 5 dəq.) qaytara bilirsə → göndərir, sonra canlı axın.
-- Bilmirsə → `resync_required` hadisəsi, müştəri REST ilə snapshot alır (`GET /rooms/{id}/messages`, `GET /events/{id}`, `GET /battles/{id}`).
+## Necə işləyir
+Frontend abunə olanda `since_sequence` göndərir (son gördüyü nömrə):
+- Server buraxılanları **qısa yaddaşdan** (son 500 hadisə və ya son 5 dəqiqə) tapa bilirsə → göndərir, sonra canlı davam edir.
+- Tapa bilmirsə → `resync_required` göndərir. Frontend REST ilə hər şeyi yenidən yükləyir.
 
-Otaq mesajları üçün xüsusi hal: mesajlar DB-dədir, `GET /rooms/{id}/messages?after_sequence=` (task 056) ilə həmişə bərpa olunur.
+**Çat mesajları xüsusidir:** onlar bazadadır, həmişə REST ilə bərpa olunur (task 056).
 
-## Necə edəcəksən
-1. Kanal başına bufer: Redis Stream (`XADD` + `MAXLEN ~ 500`) pub/sub-un əksik tərəfini də doldurur. Araşdır.
-2. Hansı kanallar bufer tələb edir? `user:` (XP, challenge), `battle:` (vacib). `feed:` üçün snapshot daha sadədir.
-3. Müştəri tərəfi qaydasını yaz (frontend üçün sənəd): boşluq → resync; background-dan qayıdış → resync.
+## Nə edəcəksən
+1. Kanallar üçün qısa yaddaş: Redis Stream (`XADD` + `MAXLEN ~ 500`). Araşdır.
+2. Hansı kanallar bunu tələb edir? `user:` (XP itməsin) və `battle:` vacibdir. `feed:` üçün sadəcə yenidən yükləmə kifayətdir.
+3. Frontend üçün qaydanı yaz: boşluq → bərpa; tətbiq arxa plandan qayıdanda → bərpa.
 
-## Qəbul meyarları
-- [ ] Müştəri 3 hadisəni buraxıb `since_sequence` ilə qayıdanda həmin 3 hadisəni alır.
-- [ ] Bufer köhnəlibsə `resync_required` alır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Frontend 3 mesaj buraxıb `since_sequence` ilə qayıdanda həmin 3 mesajı alır.
+- [ ] Çox köhnə nömrə ilə qayıdanda `resync_required` alır.

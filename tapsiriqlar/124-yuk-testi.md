@@ -1,25 +1,33 @@
 # 124 — Yük testi
 
-**Faza:** 12 · **Asılılıq:** 123 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 12 · **Əvvəl bitməli:** 123
 
-## Məqsəd
-Sistemin hədəf yükü daşıdığını ölçmək.
+## Qısaca
+Sistemin hədəf yükü daşıdığını **ölç**.
 
-## Niyə
-Sənəd (bölmə 10): "Qiymətləndirmə üçün hədəf yük profili: tenant başına 1 000 eyni vaxtda istifadəçi, 100 aktiv otaq və cəmi saniyədə 50 mesaj sorğusu. Bu, ölçülmüş məhsuldarlıq deyil, layihə yüküdür. Proqramçı pilotdan əvvəl onu yük testi ilə yoxlayır."
-Hədəflər: REST p95 ≤ 500 ms; mesaj çatdırılması p95 ≤ 1 s; hesab/əmsal yenilənməsi p95 ≤ 2 s.
+## Hədəflər (sənəddən)
+**Yük:** bir bukmekerdə 1000 eyni anda istifadəçi, 100 aktiv otaq, saniyədə 50 mesaj.
 
-## Necə edəcəksən
-1. Alət: **k6** (JS skriptləri, WebSocket dəstəyi). Alternativ: Artillery.
+**Sürət:**
+| Nə | Hədəf (p95) |
+|---|---|
+| REST sorğusu | ≤ 500 ms |
+| Mesajın çatması | ≤ 1 saniyə |
+| Hesab/əmsal yenilənməsi | ≤ 2 saniyə |
+
+(p95 = sorğuların 95%-i bu vaxtdan sürətlidir.)
+
+## Nə edəcəksən
+1. Alət: **k6** (JavaScript ilə ssenari yazılır, WebSocket dəstəkləyir).
 2. Ssenarilər:
-   - 1 000 virtual istifadəçi: exchange → /me → /events (hər 15 san.) → otağa WS abunə.
-   - 100 otaq, otaq başına ~10 yazıçı: ümumi 50 mesaj/san.
-   - Mesaj çatdırılma gecikməsi: göndərən vaxtı mesaja yazır, alan müqayisə edir.
-   - 200 paralel battle.
-3. Staging-ə bənzər mühitdə (lokal laptop real nəticə vermir).
-4. Darboğazları tap: DB connection pool ölçüsü, N+1 (030), Redis əmrləri, outbox gecikməsi (045).
-5. Nəticələri yaz: hansı yükdə nə qırıldı, nəyi düzəltdin.
+   - 1000 virtual istifadəçi: giriş → `/me` → `/events` (15 saniyədə bir) → otağa qoşulma;
+   - 100 otaqda saniyədə cəmi 50 mesaj;
+   - mesajın çatma vaxtı: göndərən vaxtı yazır, alan müqayisə edir;
+   - 200 eyni anda duel.
+3. Production-a bənzər mühitdə et (laptop real nəticə vermir).
+4. Darboğazları tap: DB bağlantı sayı, N+1, Redis, outbox gecikməsi.
+5. Nəticələri yaz: hansı yükdə nə sındı, nəyi düzəltdin.
 
-## Qəbul meyarları
-- [ ] Hədəf yükdə üç p95 hədəfi ödənir (hesabat).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Hədəf yükdə üç sürət hədəfi ödənir (hesabat).
 - [ ] Hesabatda ən azı bir tapılmış və düzəldilmiş darboğaz var.

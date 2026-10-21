@@ -1,36 +1,32 @@
-# 105 — Əşyanın geyinilməsi (slotlar)
+# 105 — Əşyanı geyinmək
 
-**Faza:** 8 · **Asılılıq:** 103 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 8 · **Əvvəl bitməli:** 103
 
-## Məqsəd
-Hər slotda bir geyinilmiş əşya.
+## Qısaca
+Hər kateqoriyada (slotda) **bir** geyinilmiş əşya.
 
-## Niyə
-Sayt: "Надето ✓" (hər slotda biri), alışdan sonra "Надеть".
+## Saytda
+"Надето ✓" (hər slotda biri), alışdan sonra "Надеть".
 
-## Cədvəl
-**`user_equipment`**
-| Sütun | Tip |
+## Yeni cədvəl: `user_equipment`
+| Sütun | İzah |
 |---|---|
-| user_id | uuid FK |
-| slot | enum (102-dəki ilə eyni) |
-| item_id | uuid FK |
-| tenant_id | uuid |
-| updated_at | timestamptz |
-
-PK (`user_id`, `slot`). Slot başına bir əşya, DB səviyyəsində.
+| user_id, slot | əsas açar: bir slotda bir əşya |
+| item_id | |
+| tenant_id | |
+| updated_at | |
 
 ## Endpoint
 `PUT /me/equipment/{slot}` → `{ item_id }`.
 
-## Necə edəcəksən
-1. Əşya istifadəçiyə məxsusdur (və ya default-dur)?
-2. Əşyanın slotu URL-dəki slotla eynidir? (Papağı "fon" slotuna geyinmək olmaz.)
-3. Upsert (`ON CONFLICT (user_id, slot) DO UPDATE`).
-4. Geyinilmiş əşya yoxdursa (sətir yoxdur) → default göstərilir.
-5. "Çıxarmaq" = default-u geyinmək. Ayrıca DELETE lazım deyil.
+## Nə edəcəksən
+1. Əşya istifadəçinindir (və ya pulsuzdur)? Yoxsa → 403/404.
+2. Əşyanın slotu URL-dəki slotla eynidir? (Papağı "fon" slotuna geyinmək olmaz.) Yoxsa → 400.
+3. Upsert: (`user_id`, `slot`) üzrə.
+4. Slotda heç nə yoxdursa → pulsuz əşya göstərilir.
+5. "Çıxarmaq" = pulsuz əşyanı geyinmək. Ayrı DELETE lazım deyil.
 
-## Qəbul meyarları
-- [ ] Sahib olmadığı əşyanı geyinmək → 403/404.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Sahib olmadığı əşyanı geyinmək → xəta.
 - [ ] Yanlış slot → 400.
 - [ ] Hər slotda həmişə dəqiq bir əşya göstərilir.

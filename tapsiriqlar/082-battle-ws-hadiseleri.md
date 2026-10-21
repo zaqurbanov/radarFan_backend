@@ -1,29 +1,28 @@
-# 082 — Battle WebSocket hadisələri
+# 082 — Duel üçün real vaxt bildirişləri
 
-**Faza:** 5 · **Asılılıq:** 076–081, 045 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 5 · **Əvvəl bitməli:** 076–081, 045
 
-## Məqsəd
-Battle-ın bütün keçidləri `battle:{id}` kanalı ilə real vaxtda gəlsin.
+## Qısaca
+Duelin bütün keçidləri `battle:{id}` kanalı ilə real vaxtda gəlsin.
 
-## Niyə
-Sənəd (bölmə 9):
-| Hadisə | Payload |
+## Bildirişlər (sənəddən)
+| Bildiriş | İçində |
 |---|---|
-| `battle.question.opened` | battle_id, question, deadline_at |
-| `battle.answer.ack` | request_id, accepted, server_received_at |
-| `battle.question.closed` | scores və icazə verilən feedback |
-| `battle.completed` | result, scores, awarded_xp, xp_balance |
+| `battle.question.opened` | duel ID, sual, deadline |
+| `battle.answer.ack` | sorğu ID, qəbul olundu?, server vaxtı |
+| `battle.question.closed` | xallar, düzgün cavab |
+| `battle.completed` | nəticə, xallar, verilən XP, yeni balans |
 
-"Real vaxt dueli üçün polling server deadline-larını əvəz etmir."
+## Niyə lazımdır (demo-da REST var axı)?
+- İki tab açıqdır: birində cavab verəndə digəri də bilməlidir.
+- Fon işi (deadline, 10 saniyə) keçid edəndə frontend xəbər tutmalıdır.
+- Real duel-də (129+) bu, **əsas** kanal olacaq.
 
-Demo-da REST cavabları kifayət edir, amma iki tab açıqdırsa və ya job (deadline, auto-next) keçid edirsə, müştəri bilməlidir. 2-ci mərhələdə (129+) isə bu hadisələr **əsas** kanaldır.
+## Nə edəcəksən
+1. Hər keçid funksiyası (073) outbox-a bildirişi **özü** yazsın. Bir yerdə.
+2. `question.opened`-də **yalnız** cari sual, düzgün cavabsız.
+3. Kanala yalnız iştirakçı abunə ola bilər (041).
 
-## Necə edəcəksən
-1. Hər keçid funksiyası (073) outbox-a uyğun hadisəni yazır, bir yerdə.
-2. `battle.question.opened` payload-ında **yalnız** cari sual (correct-siz).
-3. `battle.question.closed`: "icazə verilən feedback". Demo-da düzgün cavab + izah; real-da isə hər iki oyunçu üçün bağlandıqdan sonra.
-4. Kanal hüququ: yalnız iştirakçı (041).
-
-## Qəbul meyarları
-- [ ] Bir tabda cavab verəndə ikinci tab `battle.question.closed` alır.
-- [ ] Heç bir `battle.question.opened` payload-ında `correct_option_id` yoxdur (test).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Bir tabda cavab → ikinci tab `question.closed` alır.
+- [ ] Heç bir `question.opened` bildirişində düzgün cavab yoxdur (test).

@@ -1,41 +1,41 @@
-# 066 — Şikayətlər: `POST /messages/{id}/reports`
+# 066 — Şikayətlər
 
-**Faza:** 4 · **Asılılıq:** 051 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 051
 
-## Məqsəd
+## Qısaca
 İstifadəçi pis mesaj haqqında moderatora şikayət etsin.
 
-## Niyə
-Sənəd (bölmə 4, Moderasiya): "İstifadəçi message haqqında spam, abuse və ya other səbəbi ilə şikayət edə bilər... Şikayətlər yalnız tenant daxilində əlçatandır; adi iştirakçılar şikayət müəlliflərini görmürlər."
-Bölmə 8: → `reason, detail optional` → `report_id, accepted`.
+## Qeyd
+Saytda şikayət düyməsi **görünmür**, amma sənəddə var. Frontend-ə əlavə olunmalıdır. Məhsul sahibinə de.
 
-**Qeyd:** saytda şikayət düyməsi görünmür (yalnız şəxsi "Скрыть"). Sənəddə isə var. Frontend-ə əlavə olunmalıdır, məhsul sahibinə bildir.
+## Qaydalar (sənəddən)
+- Səbəblər: `spam`, `abuse` (təhqir), `other`.
+- Şikayətlər yalnız tenant daxilində görünür.
+- Adi istifadəçilər **kimin** şikayət etdiyini görmür.
 
-## Cədvəl
-**`message_reports`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | |
-| tenant_id | uuid | |
-| message_id | uuid FK | |
-| reporter_id | uuid FK → users | |
-| reason | enum(`spam`, `abuse`, `other`) | |
-| detail | varchar(500) NULL | |
-| status | enum(`open`, `resolved`, `dismissed`) | |
-| resolved_by | uuid NULL | |
-| resolved_at | timestamptz NULL | |
-| created_at | timestamptz | |
+## Endpoint
+`POST /messages/{id}/reports` → `{ reason, detail? }` → `{ report_id, accepted }`.
 
-UNIQUE (`message_id`, `reporter_id`). Eyni şəxs eyni mesaja bir dəfə.
-Index (`tenant_id`, `status`, `created_at`). Moderator siyahısı üçün.
+## Yeni cədvəl: `message_reports`
+| Sütun | İzah |
+|---|---|
+| id, tenant_id, message_id | |
+| reporter_id | kim şikayət etdi |
+| reason | `spam` / `abuse` / `other` |
+| detail | əlavə izah (istəyə bağlı) |
+| status | `open` / `resolved` / `dismissed` |
+| resolved_by, resolved_at | |
+| created_at | |
 
-## Necə edəcəksən
-1. Öz mesajına şikayət? Rədd et.
-2. Təkrar şikayət → idempotent, mövcud `report_id`.
-3. Şikayət spam-ı: bir istifadəçi saatda 100 şikayət? Rate limit.
-4. Avtomatik qayda (istəyə bağlı): N fərqli istifadəçidən şikayət gəlsə, mesaj avtomatik gizlədilsin? Sənəddə yoxdur, MVP üçün etmə, qeyd et.
-5. Moderatora real vaxt bildirişi: `moderation:{tenant}` kanalı.
+- Unique (`message_id`, `reporter_id`): bir adam bir mesaja bir dəfə.
+- Index (`tenant_id`, `status`, `created_at`): moderator siyahısı üçün.
 
-## Qəbul meyarları
-- [ ] Şikayət yaradılır, eyni şəxsdən təkrar dublikat yaratmır.
-- [ ] Adi istifadəçi heç bir API-dən reporter-i görə bilmir.
+## Nə edəcəksən
+1. Öz mesajına şikayət → rədd et.
+2. Təkrar şikayət → mövcud `report_id`-ni qaytar.
+3. Şikayət spam-ı: saatda maksimum say.
+4. Moderatora real vaxtda bildiriş: `moderation:{tenant}` kanalı.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Şikayət yaranır, eyni adamdan təkrar dublikat yaratmır.
+- [ ] Adi istifadəçi heç bir yerdə şikayət edəni görə bilmir.

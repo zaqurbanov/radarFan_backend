@@ -1,22 +1,25 @@
-# 047 — `event.updated` və `odds.updated` yayımı
+# 047 — Hesab və əmsal yeniləmələrinin yayımı
 
-**Faza:** 3 · **Asılılıq:** 027, 045 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 3 · **Əvvəl bitməli:** 027, 045
 
-## Məqsəd
-Hesab, dövr, status və əmsal dəyişiklikləri real vaxtda müştərilərə çatsın.
+## Qısaca
+Hesab, dəqiqə, status və əmsal dəyişəndə frontend dərhal xəbər tutsun.
 
-## Niyə
-- Sənəd (bölmə 9): `event.updated` → event_id, version, score, period, status; `odds.updated` → market_id, version, outcomes, updated_at.
-- "Matçlar üçün hər 15 saniyədə ehtiyat polling mümkündür, lakin handoff yenə də aktuallığı serverdə yoxlayır."
-- Bölmə 10: hesab/əmsal yenilənməsinin p95-i 2 san.-dək.
+## Mesajlar (sənəddən)
+| Mesaj | Nə var içində |
+|---|---|
+| `event.updated` | matç ID, versiya, hesab, dövr, status |
+| `odds.updated` | bazar ID, versiya, nəticələr, yenilənmə vaxtı |
 
-## Necə edəcəksən
-1. Feed upsert (027) dəyişiklik etdikdə, eyni tranzaksiyada outbox-a (045) hadisə yaz.
-2. Hansı kanallara? `event:{id}` (matç mərkəzi) və `feed:{tenant}` (lent). Bir hadisə iki kanala = iki outbox sətri? Yoxsa relay bir sətri bir neçə kanala göndərir? Qərar ver.
-3. **Versiya qaydası:** müştəri köhnə versiyanı yenisinin üstünə yazmasın, payload-da `version` olsun. Bu, server qaydasıdır, amma müştəri üçün sənədləşdir.
-4. Əmsallar çox tez dəyişə bilər (canlı futbolda saniyədə bir neçə dəfə). **Coalescing:** eyni market üçün qısa pəncərədə (250–500 ms) yalnız sonuncunu göndər.
-5. Suspended → `odds.updated` ilə `status: suspended` gedir, frontend düymələri bağlayır.
+Hədəf: dəyişiklik 2 saniyədə çatsın.
 
-## Qəbul meyarları
-- [ ] Demo feed hesabı dəyişəndə `event:{id}` abunəçisi 2 san. ərzində `event.updated` alır.
-- [ ] Payload-da həmişə `version` var.
+## Nə edəcəksən
+1. Matç yazılanda (027) eyni tranzaksiyada outbox-a (045) qeyd yaz.
+2. Hansı kanallara? `event:{id}` (matç səhifəsi) və `feed:{tenant}` (lent).
+3. Mesajda **həmişə** `version` olsun. Frontend köhnə versiyanı yenisinin üstünə yazmasın.
+4. Canlı matçda əmsal saniyədə bir neçə dəfə dəyişə bilər. **Seyrəlt:** yarım saniyədə bir, yalnız sonuncunu göndər.
+5. Bazar `suspended` olanda da mesaj getsin, frontend düymələri bağlasın.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Demo hesab dəyişəndə matç səhifəsi 2 saniyədə yeni hesabı alır.
+- [ ] Mesajda həmişə `version` var.

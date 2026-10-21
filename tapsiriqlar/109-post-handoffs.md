@@ -1,56 +1,53 @@
-# 109 — `POST /handoffs`: bukmekerə keçid
+# 109 — Bukmekerə keçid: `POST /handoffs`
 
-**Faza:** 9 · **Asılılıq:** 108, 036 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 9 · **Əvvəl bitməli:** 108, 036
 
-## Məqsəd
-Kupondakı seçimləri qısaömürlü birdəfəlik token-ə çevirmək. Tərəfdaş bu token ilə öz kuponunu açır.
+## Qısaca
+Kupondakı seçimləri qısa ömürlü, bir dəfəlik bir "bilet"ə (token) çevir. Bukmeker bu biletlə öz kuponunu açır.
 
-## Niyə
-- Sənəd (bölmə 3): "Nəticəyə klik POST /handoffs sorğusunu yaradır... Uğurlu handoff qısaömürlü token və correlation_id ehtiva edir. Müştəri onu adapter vasitəsilə konteynerə ötürür; tərəfdaş kuponu açır."
-- "RADAR.FAN mərc məbləğini qəbul etmir və mərcin yerləşdirilməsini təsdiqləmir."
-- Bölmə 7: Handoff — id, user_id, event_id, outcome_id, odds_version, status, correlation_id; "birdəfəlik token və TTL".
-- Bölmə 9: "token birdəfəlikdir, TTL 60 saniyədir, yalnız qeyri-şəffaf ID ehtiva edir".
-- Sayt: "Проверить переход к партнёру →" → "Переход проверен ✓ · В рабочем продукте партнёр получит 2 выбранных исходов и откроет свой купон. В демо данные никуда не отправляются, ставки не размещаются."
+## Saytda
+"Проверить переход к партнёру →" → "Переход проверен ✓ · В рабочем продукте партнёр получит 2 выбранных исходов и откроет свой купон. В демо данные никуда не отправляются, ставки не размещаются."
 
-## Cədvəllər
+## Qaydalar (sənəddən)
+- Bilet 60 saniyə yaşayır, bir dəfə işləyir.
+- Biletin içində yalnız "mənasız" ID var. İçinə baxmaqla heç nə öyrənmək olmur.
+- **Biz mərc qəbul etmirik və mərcin qoyulduğunu təsdiqləmirik.**
+- Bukmekerin "opened" cavabı = kupon **açıldı**, mərc qoyuldu demək **deyil**.
+
+## Axın
+```
+Frontend → POST /handoffs → bilet + correlation_id
+Frontend → (bridge) → bukmeker tətbiqi: "bu biletlə kupon aç"
+Bukmekerin serveri → bizə: "bu bilet nədir?" (112)
+Biz → seçimlər (bukmekerin öz ID-ləri ilə)
+Bukmeker kuponu açır
+```
+
+## Yeni cədvəllər
 **`handoffs`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | |
-| tenant_id | uuid | |
-| user_id | uuid FK | |
-| token_hash | char(64) UNIQUE | token-in özü saxlanmır |
-| correlation_id | uuid UNIQUE | tərəfdaşla izləmə |
-| status | enum(`created`, `resolved`, `opened`, `rejected`, `failed`, `expired`) | |
-| expires_at | timestamptz | created + 60 san. |
-| resolved_at | timestamptz NULL | tərəfdaş backend-i istifadə edəndə |
-| client_result | jsonb NULL | bridge cavabı (`opened`/`rejected` + reason_code) |
-| created_at | timestamptz | |
-
-**`handoff_selections`**
-| Sütun | Tip |
+| Sütun | İzah |
 |---|---|
-| handoff_id | uuid FK |
-| event_id, market_id, outcome_id | uuid |
-| provider_event_id, provider_market_id, provider_outcome_id | varchar (tərəfdaşın identifikatorları!) |
-| price | numeric |
-| odds_version | int |
+| id, tenant_id, user_id | |
+| token_hash | biletin özü yox, **hash-i** |
+| correlation_id | bukmekerlə izləmə üçün unikal ID |
+| status | `created` / `resolved` / `opened` / `rejected` / `failed` / `expired` |
+| expires_at | yaranma + 60 saniyə |
+| resolved_at | bukmeker nə vaxt istifadə etdi |
+| client_result | bridge cavabı |
+| created_at | |
 
-PK (`handoff_id`, `outcome_id`).
+**`handoff_selections`**: hər seçim üçün: matç, bazar, nəticə, **bukmekerin öz ID-ləri**, əmsal, versiya.
 
-## Body
-Sənəd: `{ outcome_id, odds_version }` (tək). Sayt: bir neçə. Universal forma: `{ selections: [{ outcome_id, odds_version }] }`. Tək seçim də massivdə.
+## Göndərilən
+`{ selections: [{ outcome_id, odds_version }] }` (tək seçim də massivdə).
 
-## Necə edəcəksən
+## Nə edəcəksən
 1. Yoxlamalar → 110, 111.
-2. Token: təsadüfi 32 bayt, base64url. DB-də SHA-256 hash.
-3. Cavab: `handoff_token`, `expires_at`, `correlation_id`.
-4. **Demo rejim:** token yaradılır, amma heç yerə getmir. Frontend "Переход проверен ✓" göstərir. Server tərəfdə nə fərqlidir? `status`-u dərhal `opened` (simulyasiya) etmək? Qərar ver.
-5. Bridge nəticəsi: müştəri bridge cavabını (`opened/rejected/failed`, bölmə 9) bizə bildirir: `POST /handoffs/{id}/result`. Analitika üçün (`betslip_opened`, `handoff_failed`). Sənəd: "Opened statusu mərcin qəbulunu deyil, kuponun açılmasını bildirir."
-6. Analitika: `handoff_requested`.
-7. Komanda adları və düymə indeksi identifikator kimi istifadə olunmur (sənəd). Yalnız provider ID-ləri.
+2. Bilet: təsadüfi 32 bayt. Bazada hash.
+3. Frontend bridge nəticəsini bizə bildirsin: `POST /handoffs/{id}/result` (analitika üçün).
+4. Demo-da bilet yaranır, amma heç yerə getmir.
+5. Komanda adları və düymə sırası ID kimi **istifadə olunmur**. Yalnız bukmekerin ID-ləri.
 
-## Qəbul meyarları
-- [ ] Token DB-də açıq saxlanmır.
-- [ ] Cavabda `correlation_id` var, loglarda da (011).
-- [ ] 60 san. sonra token istifadə oluna bilmir (112).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Bilet bazada açıq mətnlə saxlanmır.
+- [ ] Cavabda və loglarda `correlation_id` var.

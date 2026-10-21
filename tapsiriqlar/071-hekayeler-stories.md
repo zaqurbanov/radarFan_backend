@@ -1,55 +1,52 @@
 # 071 — Hekayələr (Stories)
 
-**Faza:** 4 · **Asılılıq:** 021 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 021
 
-## Məqsəd
-"Комьюнити" ekranının yuxarısındakı hekayələr: redaksiya kartları, slayd-slayd, hədəf düyməsi ilə.
+## Qısaca
+"Комьюнити" ekranının yuxarısındakı hekayələr: redaktor kartları, slayd-slayd, düymə ilə.
 
-## Niyə
-Sayt ("Комьюнити" → "Истории и чаты твоих матчей"):
-| Hekayə | Slayd | Mətn | CTA |
+## Saytda
+| Hekayə | Slayd | Başlıq | Düymə |
 |---|---|---|---|
 | PULSE | 1/4 | "Добро пожаловать на трибуну" | — |
 | Эль-класико | 2/4 | "Матч, который обсуждают все" | "Открыть чат →" |
 | NBA | 3/4 | ... | ... |
 | Твой фан | 4/4 | "Собери свой образ" | "Открыть персонажа" |
 
-"← Предыдущая / Следующая →" naviqasiya. Sənəddə yoxdur, saytdan gəlir. Admin idarə edir (117).
+Sənəddə yoxdur, saytdan gəlir. Admin idarə edir (117).
 
-## Cədvəllər
+## Yeni cədvəllər
 **`stories`**
-| Sütun | Tip |
+| Sütun | İzah |
 |---|---|
-| id | uuid PK |
-| tenant_id | uuid |
-| title | varchar(40) |
-| icon | varchar(10) (emoji/qısaltma: "RM", "★") |
-| position | smallint |
-| status | enum(`draft`, `published`, `archived`) |
-| starts_at, ends_at | timestamptz NULL (göstərilmə müddəti) |
-| event_id | uuid NULL (matça bağlı hekayə) |
-| locale | varchar(10) |
-| created_at, updated_at | |
+| id, tenant_id | |
+| title | "Эль-класико" |
+| icon | "RM", "★" |
+| position | sıra |
+| status | `draft` / `published` / `archived` |
+| starts_at, ends_at | göstərilmə müddəti |
+| event_id | matça bağlıdırsa |
+| locale | dil |
 
 **`story_slides`**
-| Sütun | Tip |
+| Sütun | İzah |
 |---|---|
-| id | uuid PK |
-| story_id | uuid FK (cascade) |
-| position | smallint |
-| heading | varchar(80) |
-| body | varchar(300) |
-| cta_label | varchar(40) NULL |
-| cta_action | enum(`open_room`, `open_event`, `open_profile`, `open_shop`, `open_games`) NULL |
-| cta_target_id | uuid NULL |
+| id, story_id | |
+| position | sıra |
+| heading, body | başlıq və mətn |
+| cta_label | düymənin yazısı |
+| cta_action | düymə nə edir (siyahıdan) |
+| cta_target_id | hansı otaq/matç |
 
-**Diqqət:** `cta_action` yalnız **sabit siyahıdan**. Sərbəst URL olmamalıdır. Sənəd (bölmə 9): "Müştəri girişindən gələn ixtiyari deep link-lər açılmır."
+**`story_views`** (istəyə bağlı): kim hansını görüb.
 
-**`story_views`** (istəyə bağlı, "baxılıb" halqası üçün): user_id, story_id, viewed_at. PK (user, story).
+## Diqqət: düymə yalnız siyahıdan
+`cta_action` yalnız bunlardan biri ola bilər: `open_room`, `open_event`, `open_profile`, `open_shop`, `open_games`.
+**Sərbəst link olmamalıdır.** Sənəd: ixtiyari linklər açılmır. Yoxsa admin hesabı ələ keçirilsə, hamını saxta sayta göndərmək olar.
 
 ## Endpoint
-`GET /stories` → aktiv hekayələr slaydları ilə, `viewed` bayrağı ilə.
+`GET /stories` → aktiv hekayələr, slaydları və "baxılıb" işarəsi ilə.
 
-## Qəbul meyarları
-- [ ] Yalnız `published` və vaxt pəncərəsində olanlar qayıdır.
-- [ ] CTA yalnız icazəli action-lardan biridir.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Yalnız dərc olunmuş və vaxtı uyğun olanlar gəlir.
+- [ ] Düymə yalnız icazəli əməliyyatlardan biridir.

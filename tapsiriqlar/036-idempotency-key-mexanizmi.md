@@ -1,55 +1,52 @@
-# 036 — Idempotency-Key mexanizmi
+# 036 — Təkrar sorğulardan qorunma (Idempotency-Key)
 
-**Faza:** 2 · **Asılılıq:** 009, 012 · **Status:** [ ]
-(Köhnə `TASKS.md`: T15)
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 009, 012
 
-## Məqsəd
-Dəyişdirici sorğu şəbəkə xətası səbəbindən təkrar göndəriləndə ikinci dəfə icra olunmasın, əvvəlki nəticə qaytarılsın.
+## Qısaca
+Vacib sorğu (XP almaq, mesaj göndərmək, bukmekerə keçid) **təsadüfən iki dəfə** gəlsə, iş **bir dəfə** görülsün.
 
-## Niyə
-Sənəd (bölmə 8): "Mükafat verən, mesaj göndərən və handoff yaradan dəyişiklik sorğuları üçün UUID formatında Idempotency-Key məcburidir... Eyni Idempotency-Key başqa gövdə ilə verilərsə, 409 IDEMPOTENCY_CONFLICT; əvvəlki gövdə ilə verilərsə, saxlanmış nəticə qaytarılır. Server açarları ən azı 24 saat saxlayır, mükafatların unikallığını əlavə olaraq ledger təmin edir."
+## Niyə lazımdır? (real ssenari)
+İstifadəçi metroda "100 XP al" düyməsini basır.
+1. Server XP-ni verir.
+2. Cavab yolda itir (internet kəsildi).
+3. Frontend "cavab gəlmədi" deyib sorğunu **təkrar** göndərir.
+4. Qorunma olmasa → **200 XP**.
 
-Ssenari: mobil şəbəkədə istifadəçi "Claim 100 XP" basır. Server XP verir, amma cavab yolda itir. Frontend 401-dən sonra (bölmə 6) və ya timeout-dan sonra təkrarlayır. Idempotency olmadan: 200 XP.
+## Necə işləyir
+- Frontend hər vacib sorğuya unikal ID qoşur: `Idempotency-Key: <uuid>` başlığı.
+- Server bu ID-ni yadda saxlayır:
+  - **ilk dəfə** gəlib → işi gör, nəticəni saxla;
+  - **eyni ID + eyni məlumat** → işi **təkrar etmə**, saxlanmış nəticəni qaytar;
+  - **eyni ID + fərqli məlumat** → 409 `IDEMPOTENCY_CONFLICT`.
+- ID-lər ən azı 24 saat saxlanır.
 
-## Cədvəl (və ya Redis)
-**`idempotency_keys`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| tenant_id | uuid | |
-| user_id | uuid | |
-| key | uuid | |
-| route | varchar(100) | `POST /challenges/:id/claim` |
-| request_hash | char(64) | body + params SHA-256 |
-| status | enum(in_progress, completed) | |
-| response_status | int NULL | |
-| response_body | jsonb NULL | |
-| created_at | timestamptz | |
-| expires_at | timestamptz | created + 24 saat |
+## Yeni cədvəl: `idempotency_keys`
+| Sütun | İzah |
+|---|---|
+| tenant_id, user_id, key | birlikdə əsas açar |
+| route | hansı endpoint |
+| request_hash | sorğu məlumatının hash-i (eyni/fərqli olduğunu yoxlamaq üçün) |
+| status | `in_progress` / `completed` |
+| response_status, response_body | saxlanmış cavab |
+| created_at, expires_at | |
 
-PK: (`tenant_id`, `user_id`, `key`). Index: `expires_at` (təmizləmə job-u üçün).
+**Niyə Redis yox, DB?** DB-də işi və açarı **eyni tranzaksiyada** yaza bilərsən. Ən etibarlısı budur.
 
-**DB yoxsa Redis?** DB: biznes əməliyyatı ilə **eyni tranzaksiyada** yazıla bilər (ən etibarlı). Redis: sürətli, amma tranzaksiya yoxdur. Tövsiyə: DB.
-
-## Alqoritm (özün addımları başa düş)
+## Nə edəcəksən (addımlar)
 1. Başlıq yoxdursa → 400 (yalnız məcburi route-larda).
-2. `INSERT ... (status=in_progress) ON CONFLICT DO NOTHING`.
-3. Insert oldu → əməliyyatı icra et → cavabı `completed` ilə saxla → qaytar.
-4. Insert olmadı (açar var):
-   - hash fərqlidir → 409 `IDEMPOTENCY_CONFLICT`;
+2. Açarı `in_progress` ilə yazmağa çalış (`ON CONFLICT DO NOTHING`).
+3. Yazıldı → işi gör → nəticəni `completed` ilə saxla → qaytar.
+4. Yazılmadı (açar artıq var):
+   - hash fərqlidir → 409;
    - `completed` → saxlanmış cavabı qaytar;
-   - `in_progress` → ilk sorğu hələ işləyir. Nə edirsən? (409 + `retryable: true`, ya da qısa gözləmə.) Qərar ver.
-5. Əməliyyat **xəta** ilə bitdisə, açarı nə edirsən? 4xx xətanı saxlamaq (eyni nəticə) vs silmək (təkrar cəhdə icazə). 5xx-də silmək məntiqlidir.
+   - `in_progress` → ilk sorğu hələ işləyir. Nə edəcəksən? (Məsələn 409 + "bir azdan təkrar et".) Qərar ver.
+5. Köhnə açarları silən fon tapşırığı (task 049).
 
-## Necə edəcəksən
-1. Fastify plugin + route config: `config: { idempotent: true }`.
-2. Hook-lar: `preHandler` (yoxla/yarat) və `onSend` (nəticəni saxla). Daha yaxşısı: biznes əməliyyatı ilə eyni tranzaksiyada saxlamaq üçün helper funksiya.
-3. Təmizləmə: köhnə açarları silən fon job (task 049).
+## Diqqət
+- Açar **istifadəçiyə bağlı** olmalıdır. Yoxsa biri başqasının açarını təxmin edib onun cavabını ala bilər.
+- Hash-dən əvvəl JSON açarlarını eyni sıraya sal (`{a,b}` və `{b,a}` eyni məlumatdır).
 
-## Tələlər
-- Açar **user-ə** bağlı olmalıdır. Yoxsa A istifadəçisi B-nin açarını təxmin edib B-nin cavabını ala bilər.
-- Hash üçün JSON-u normallaşdır (açarların sırası).
-
-## Qəbul meyarları
-- [ ] Eyni açar + eyni body iki dəfə → bir əməliyyat, iki eyni cavab.
-- [ ] Eyni açar + başqa body → 409.
-- [ ] Eyni açarla **paralel** iki sorğu → bir əməliyyat (test, `Promise.all`).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Eyni açar + eyni məlumat 2 dəfə → iş bir dəfə, iki eyni cavab.
+- [ ] Eyni açar + fərqli məlumat → 409.
+- [ ] Eyni açarla **eyni anda** 2 sorğu → iş bir dəfə (test, `Promise.all`).

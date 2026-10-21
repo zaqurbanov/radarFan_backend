@@ -1,37 +1,35 @@
-# 079 — Battle-ın tamamlanması və nəticəsi
+# 079 — Duelin sonu və nəticə
 
-**Faza:** 5 · **Asılılıq:** 077, 083, 086 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 5 · **Əvvəl bitməli:** 077, 083, 086
 
-## Məqsəd
-Battle-ı bir dəfə tamamla, nəticəni hesabla, XP və coin-i **atomar** ver.
+## Qısaca
+Duel-i **bir dəfə** bitir, nəticəni hesabla, XP və coin-i **atomar** ver.
 
-## Niyə
-- Sənəd (bölmə 5): "Nəticə: user_score > bot_score — victory, bərabərlik — draw, az olduqda — defeat. Mövcud prototip bərabər hesabı səhvən məğlubiyyət kimi təsvir edir; reallaşdırmada bunu düzəltmək lazımdır."
-- "Tamamlanmış duel üçün hər düzgün cavaba 50 XP, maksimum 150 XP verilir. Mükafat completed zamanı bir server tranzaksiyası ilə qeyd olunur. Buraxılmış sual 0 xal alır; nəticənin yenidən yüklənməsi və təkrar finish XP-ni yenidən vermir."
-- Bölmə 11: "İlk completed zamanı 0-dan 150-dək XP verilir. Nəticənin yenidən yüklənməsi, paralel sorğular və iki cihaz mükafatı ikiqat etmir."
-- Sayt: "Ты победил! 2 : 1 Nihal — Alex +100 XP · +40 ◈", "Сыграть ещё", "Моя статистика →", "В магазин персонажа →".
+## Saytda
+"Ты победил! 2 : 1 · Nihal — Alex · +100 XP · +40 ◈", "Сыграть ещё", "Моя статистика →", "В магазин персонажа →".
 
 ## Nəticə qaydası
-| Hesab | Nəticə | Sayt mətni |
+Bot həmişə **1 xal** toplayır. Deməli:
+| Sənin düzgün cavabın | Hesab | Nəticə |
 |---|---|---|
-| 2:1, 3:1 | victory | Ты победил! |
-| 1:1 | **draw** | (sayt yoxla; prototipdəki səhvi təkrarlama) |
-| 0:1 | defeat | |
+| 0 | 0:1 | defeat (məğlubiyyət) |
+| 1 | 1:1 | **draw (heç-heçə)** |
+| 2 | 2:1 | victory (qələbə) |
+| 3 | 3:1 | victory |
 
-Bot həmişə 1 xal yığır, deməli: 0 düzgün → defeat, 1 → draw, 2–3 → victory.
+**Diqqət:** prototip 1:1-i səhvən **məğlubiyyət** kimi göstərirdi. Sənəd bunu düzəltməyi tələb edir.
 
-## Tranzaksiya
-1. Battle `FOR UPDATE`. `state` artıq `completed` → mövcud nəticəni qaytar (idempotent).
+## Addımlar (bir tranzaksiyada, duel kilidli)
+1. Artıq `completed`-dirsə → köhnə nəticəni qaytar.
 2. Son sual bağlıdır?
-3. `result` hesabla, `state = completed`, `completed_at`.
-4. `xp_eligible` (080) isə:
-   - XP ledger: `amount = correct × 50`, `source_type = battle`, `source_id = battle_id` (083). Unique constraint ikiqat ödənişi DB səviyyəsində bloklayır.
-   - Coin ledger: `correct × 20` (088). Saytda coin də yalnız "ilk 3 battle"-da verilir.
-5. Challenge: `complete_battle` (091). Məğlubiyyət də sayılır (sənəd).
-6. Outbox: `battle.completed` { result, scores, awarded_xp, xp_balance }, `xp.updated`.
-7. Analitika: `battle_completed`.
+3. Nəticəni hesabla, vəziyyəti `completed` et.
+4. `xp_eligible` isə:
+   - XP: `düzgün × 50` (083). Ledger-dəki unique qayda ikiqat ödənişi bloklayır.
+   - Coin: `düzgün × 20` (088).
+5. "Duel tamamla" tapşırığı (091). **Məğlubiyyət də sayılır.**
+6. Outbox: `battle.completed`, `xp.updated`.
 
-## Qəbul meyarları
-- [ ] 1:1 → `draw`.
-- [ ] Tamamlamanı iki dəfə və paralel çağırmaq → bir ledger qeydi (test).
-- [ ] Limit dolubsa → `awarded_xp: 0`, nəticə yenə qeyd olunur.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] 1:1 → draw.
+- [ ] Bitirməni iki dəfə və eyni anda çağırmaq → bir XP qeydi (test).
+- [ ] Gündəlik limit dolubsa → 0 XP, amma nəticə qeyd olunur.

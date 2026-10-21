@@ -1,27 +1,30 @@
-# 067 — Moderasiya: mesajın gizlədilməsi
+# 067 — Moderator mesajı hamı üçün gizlədir
 
-**Faza:** 4 · **Asılılıq:** 066, 017 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 066, 017
 
-## Məqsəd
-Moderator mesajı **hamı üçün** gizlədir.
+## Qısaca
+Moderator pis mesajı **hamı üçün** gizlədir.
 
-## Niyə
-Sənəd (bölmə 4): "Moderator mesajı gizlədə ... bilər; əməliyyatlar səbəblə birlikdə jurnala yazılır. Gizlədilmiş mətn bütün müştərilərdə «Mesaj moderator tərəfindən gizlədilib» etiketi ilə əvəz edilir."
-Bölmə 8: `POST /moderation/messages/{id}/hide` → reason → mesaj statusu və audit_id.
-Bölmə 9: `room.message.hidden` → message_id, moderation_label.
-Bölmə 11: "Moderasiya bütün qoşulmuş iştirakçılarda əks olunur".
+## Qaydalar (sənəddən)
+- Gizlədilmiş mesajın yerində hamı görür: "Mesaj moderator tərəfindən gizlədilib".
+- Hər əməliyyat səbəblə birlikdə jurnala yazılır.
+- Dəyişiklik bütün qoşulmuş istifadəçilərə dərhal çatır.
 
-## Necə edəcəksən (tranzaksiya)
-1. `requireRole('moderator')` + mesaj eyni tenant-da.
-2. `messages.status = hidden_by_moderator`, `hidden_at`, `hidden_by`.
-3. `moderation_actions`-a yaz (069).
+## Endpoint
+`POST /moderation/messages/{id}/hide` → `{ reason }` → mesaj statusu + jurnal ID-si.
+
+## Addımlar (bir tranzaksiyada)
+1. İstifadəçi moderatordur + mesaj eyni tenant-dadır?
+2. Mesajın statusunu `hidden_by_moderator` et, kim və nə vaxt gizlətdi yaz.
+3. Jurnala yaz (069).
 4. Bu mesaja aid açıq şikayətləri `resolved` et.
 5. Outbox: `room.message.hidden`.
-6. Commit.
-7. Geri qaytarmaq (unhide)? Sənəd demir. Səhv gizlətmə olur, ona görə `unhide` əlavə et (jurnala yazılır).
-8. Mətni DB-də silirsən, yoxsa saxlayırsan? Saxla (sübut, audit), amma API-də heç vaxt qaytarma (moderator paneli istisna).
 
-## Qəbul meyarları
-- [ ] Gizlətmədən sonra bütün qoşulmuş müştərilər hadisəni alır.
-- [ ] `GET messages` gizlədilmiş mesajın mətnini qaytarmır.
+## Nə edəcəksən
+1. Səhvən gizlətmə olur. Geri qaytarma (`unhide`) əlavə et, o da jurnala yazılsın.
+2. Mətni bazadan **silmə** (sübut lazımdır). Amma API-də heç vaxt qaytarma (moderator paneli istisna).
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Gizlətmədən sonra bütün qoşulmuş müştərilər bildiriş alır.
+- [ ] `GET messages` gizli mesajın mətnini qaytarmır.
 - [ ] Jurnalda qeyd var.

@@ -1,28 +1,34 @@
-# 127 — Docker image və CI
+# 127 — Docker image və avtomatik yoxlama (CI)
 
-**Faza:** 12 · **Asılılıq:** 123 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 12 · **Əvvəl bitməli:** 123
 
-## Məqsəd
-Backend təkrarlana bilən konteyner kimi build olunsun. Hər push-da testlər avtomatik işləsin.
+## Qısaca
+Backend Docker image kimi qurulsun. Hər push-da testlər avtomatik işləsin.
 
-## Niyə
-Sənəd (bölmə 11, təhvil): "işə salma/buraxılış təlimatı", "mühit konfiqurasiyası". Bölmə 10: "Mühitlər: local demo, test tərəfdaşı ilə staging və production."
+## Nə edəcəksən
 
-## Necə edəcəksən
-1. **Dockerfile** (multi-stage):
-   - build stage: `npm ci`, `tsc` → `dist/`;
-   - runtime stage: yalnız production asılılıqları + `dist/`, non-root user, `NODE_ENV=production`.
-   - `tsx` production-da istifadə olunmur. `@/` path alias-ları build-də necə həll olunur? (`tsc-alias` və ya bundler, araşdır.)
-2. Proseslər: `api` (HTTP + WS), `worker` (job-lar, 049), `migrate` (bir dəfəlik). Eyni image, fərqli komanda.
-3. **CI** (GitHub Actions):
-   - typecheck, lint
-   - testlər (Postgres + Redis service container-ləri ilə)
-   - `openapi.json` dəyişibsə və commit olunmayıbsa → fail (122)
-   - docker build
-   - `npm audit`
-4. Image-ə versiya teqi (git SHA).
+### 1. Dockerfile (iki mərhələli)
+- **Qurma mərhələsi:** asılılıqları yüklə, TypeScript-i kompilyasiya et → `dist/`.
+- **İşləmə mərhələsi:** yalnız production asılılıqları + `dist/`. Root olmayan istifadəçi.
 
-## Qəbul meyarları
+**Bilinən problem:** `tsc` `@/` yollarını **dəyişmir**, ona görə `npm start` indi işləmir (task 003-də görmüşdük). Həll: `tsc-alias` və ya bundler (esbuild/tsup). Araşdır.
+
+### 2. Bir image, üç komanda
+- `api`: HTTP + WebSocket
+- `worker`: fon işləri (049)
+- `migrate`: bir dəfəlik migration
+
+### 3. CI (GitHub Actions)
+- tip yoxlaması, lint;
+- testlər (Postgres + Redis konteynerləri ilə);
+- `openapi.json` dəyişib, amma commit olunmayıbsa → xəta;
+- Docker build;
+- `npm audit`.
+
+### 4. Image versiyası
+Git commit hash-i ilə etiketlə.
+
+## Hazır olduğunu necə yoxlayarsan
 - [ ] `docker build` + `docker run` ilə server işləyir.
-- [ ] Container root kimi işləmir.
-- [ ] PR-da CI testləri avtomatik işləyir.
+- [ ] Konteyner root kimi işləmir.
+- [ ] Pull request-də testlər avtomatik işləyir.

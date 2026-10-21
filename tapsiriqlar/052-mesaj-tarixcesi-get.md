@@ -1,30 +1,28 @@
-# 052 — Mesaj tarixçəsi: `GET /rooms/{id}/messages`
+# 052 — Mesajları oxumaq: `GET /rooms/{id}/messages`
 
-**Faza:** 4 · **Asılılıq:** 051 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 051
 
-## Məqsəd
-Otağa girəndə son mesajlar, yuxarı sürüşdürəndə köhnələri.
+## Qısaca
+Otağa girəndə son 50 mesaj gəlsin, yuxarı sürüşdürəndə köhnələr.
 
-## Niyə
-Sənəd (bölmə 4): "Girişdə son 50 görünən mesaj yüklənir; əvvəlkilər kursorla əlçatandır." Bölmə 8: → `items, next_cursor, last_sequence`.
-
-## Endpoint
-| Param | Qeyd |
+## Parametrlər
+| Parametr | İzah |
 |---|---|
-| `limit` | default 50, max 50 |
-| `before_sequence` | köhnə mesajlar üçün cursor |
-| `after_sequence` | reconnect üçün (056) |
+| `limit` | default 50, maks. 50 |
+| `before_sequence` | köhnə mesajlar üçün: "bu nömrədən əvvəlkilər" |
+| `after_sequence` | yenidən qoşulanda: "bu nömrədən sonrakılar" (task 056) |
 
-Cavab: `items[]` (id, sequence, user: {id, nickname, initials, is_demo}, text, status, like_count, liked_by_me, hidden_for_me, created_at), `next_cursor`, `last_sequence`.
+## Hər mesajda
+id, nömrə, müəllif (id, ad, baş hərflər, demo-dur?), mətn, status, like sayı, mən like etmişəm?, mən gizlətmişəm?, vaxt.
 
-## Necə edəcəksən
-1. Cursor burada sadədir: sequence özü unikal və sıralıdır.
-2. **"Son 50 görünən":** gizlədilmiş mesajlar sayılırmı? Sənəd: "Gizlədilmiş mətn bütün müştərilərdə «Mesaj moderator tərəfindən gizlədilib» etiketi ilə əvəz edilir". Deməli gizlədilmiş mesaj **siyahıda qalır**, amma `text` boşdur və etiket var. Sequence boşluğu olmasın deyə.
-3. **Mətn gizlədilməsi serverdə olur.** Gizlədilmiş mesajın `text`-ini cavaba qoyub frontend-ə "göstərmə" demək olmaz. DevTools-da görünür.
-4. İstifadəçi adları üçün join (N+1 olmasın!).
-5. Şəxsi gizlətmə (060) və like (059) sahələri istifadəçiyə görə fərdiləşir.
-6. Ban olunmuş istifadəçi oxuya bilərmi? Qərar ver.
+## Nə edəcəksən
+1. Burada cursor sadədir: sıra nömrəsi özü unikal və ardıcıldır.
+2. **Moderatorun gizlətdiyi mesajlar siyahıda qalır**, amma mətni **boş** gəlir və "Mesaj moderator tərəfindən gizlədilib" etiketi olur. Niyə siyahıdan atmırıq? Nömrədə boşluq yaranmasın deyə.
+3. Müəlliflərin adları üçün `JOIN` et (N+1 olmasın!).
 
-## Qəbul meyarları
-- [ ] Moderator gizlətdiyi mesajın mətni API cavabında yoxdur.
-- [ ] Səhifələrin birləşməsində boşluq və dublikat yoxdur.
+## Diqqət: gizli mətni serverdə gizlət
+Gizlədilmiş mesajın mətnini cavaba qoyub frontend-ə "göstərmə" demək **olmaz**. Hər kəs brauzerin DevTools-unda onu görər.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Moderatorun gizlətdiyi mesajın mətni cavabda yoxdur.
+- [ ] Bütün səhifələri birləşdirəndə boşluq və dublikat yoxdur.

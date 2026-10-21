@@ -5,6 +5,7 @@ import { db } from "@/db/index.js";
 import { and, eq } from "drizzle-orm";
 import { AccessDenied, SessionExpiredError, UnauthorizedError } from "@/common/error/appErrors.js";
 import { redis } from "@/config/redis.js";
+import { env } from "@/config/env.js";
 export async function authRoutes(app:FastifyInstance){
 
   // demo ucun yaradilan token
@@ -70,7 +71,7 @@ export async function authRoutes(app:FastifyInstance){
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       const accessToken = app.jwt.sign(
         { user_id: user!.id, tenant_id: tenant.id, role: user!.role },
-        { expiresIn: '15m' }
+        { expiresIn: env.ACCESS_TOKEN_TTL || '15m' }
       );
 
       return {

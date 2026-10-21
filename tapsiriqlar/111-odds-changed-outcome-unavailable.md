@@ -1,28 +1,25 @@
-# 111 — `ODDS_CHANGED` və `OUTCOME_UNAVAILABLE` axını
+# 111 — Əmsal dəyişəndə nə olur
 
-**Faza:** 9 · **Asılılıq:** 110 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 9 · **Əvvəl bitməli:** 110
 
-## Məqsəd
-Qiymət dəyişəndə istifadəçi yeni qiyməti görsün və şüurlu şəkildə təsdiqləsin.
+## Qısaca
+Qiymət dəyişibsə, istifadəçi yeni qiyməti görsün və **özü təsdiqləsin**.
 
-## Niyə
-- Sənəd (bölmə 3): "Qiymət dəyişərsə, yeni qiymətlə ODDS_CHANGED qaytarılır; istifadəçi yenilənmiş seçimi təsdiqləyir. Suspension zamanı OUTCOME_UNAVAILABLE qaytarılır."
-- Bölmə 8: "ODDS_CHANGED üçün details aktual qiyməti və version-u ... ehtiva edir."
-- Bölmə 11: "Köhnəlmiş qiymət yenidən təsdiq tələb edir."
+## Niyə avtomatik yeni qiymətlə davam etmirik?
+İstifadəçi 4.20-yə razılaşdı, qiymət 3.10 oldu. Xəbərsiz dəyişmək = aldatmaq. Qanun da bunu tələb edir.
 
-**Niyə avtomatik yeni qiymətlə davam etmirik?** İstifadəçi 4.20-yə razılaşdı, 3.10 oldu. Xəbərsiz dəyişmək = aldatma. Tənzimləyicilər bunu tələb edir.
-
-## Xəta formatı
+## Xəta forması
 409 `ODDS_CHANGED`, `details`:
 `{ changes: [{ outcome_id, old_price, old_version, new_price, new_version }] }`
-Frontend: "Əmsal 4.20 → 3.10 dəyişdi. Təsdiqləyirsən?" → yeni `odds_version` ilə yenidən `POST /handoffs`.
 
-## Necə edəcəksən
-1. Idempotency (036): yeni versiyalarla təkrar sorğu fərqli body-dir → **yeni** Idempotency-Key lazımdır. Bunu frontend üçün sənədləşdir.
-2. Kupon (108) seçimlərinin `price_at_selection`-ı təsdiqdən sonra yenilənsin.
-3. Kiçik dəyişikliklər üçün tolerans (məs. qiymət artırsa, istifadəçinin xeyrinədir, təsdiq lazımdırmı)? Bəzi bukmekerlər "accept higher odds" seçimi verir. Sənəd bunu demir, hər dəyişiklik təsdiq tələb edir. Qeyd et, etmə.
+Frontend: "Əmsal 4.20 → 3.10 dəyişdi. Təsdiqləyirsən?" → yeni versiyalarla yenidən `POST /handoffs`.
 
-## Qəbul meyarları
-- [ ] Köhnə versiya → 409, details-də yeni qiymət.
-- [ ] Yeni versiya ilə təkrar → uğur.
-- [ ] Suspended outcome → 409 `OUTCOME_UNAVAILABLE`.
+## Nə edəcəksən
+1. Yeni versiyalarla sorğu = **fərqli** məlumat → **yeni** Idempotency-Key lazımdır. Bunu frontend üçün yaz.
+2. Təsdiqdən sonra kupondakı (108) qiyməti yenilə.
+3. Bağlı əmsal → 409 `OUTCOME_UNAVAILABLE`.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Köhnə versiya → 409, `details`-də yeni qiymət.
+- [ ] Yeni versiya ilə təkrar → uğurlu.
+- [ ] Bağlı əmsal → 409 `OUTCOME_UNAVAILABLE`.

@@ -1,32 +1,28 @@
-# 065 — `poll.updated`: alıcıya görə fərdiləşdirmə
+# 065 — Səs verməyənlər real vaxtda da nəticəni görməsin
 
-**Faza:** 4 · **Asılılıq:** 062, 044 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 062, 044
 
-## Məqsəd
-Səs verməmiş istifadəçi real vaxtda da nəticələri görməsin.
+## Qısaca
+Sorğu yeniləməsi gələndə: səs **vermiş** istifadəçi rəqəmləri görür, **verməmiş** görmür.
 
-## Niyə
-Sənəd (bölmə 9): "İstifadəçi səs verməzdən əvvəl poll.updated yalnız status və version ehtiva edir, counts və total olmur; server payload-u alıcının hüquqlarına uyğun fərdiləşdirir."
-
-**Niyə?** Səsdən əvvəl nəticələri görmək seçimə təsir edir ("hamı RM deyir, mən də"). Bu, sorğunun dürüstlüyü üçündür.
+## Niyə lazımdır?
+Səsdən əvvəl nəticəni görmək seçimə təsir edir ("hamı RM deyir, mən də"). Sorğunun dürüstlüyü üçün.
 
 ## Problem
-Pub/sub (044) **hamıya eyni** mesajı göndərir. Fərdiləşdirmə lazımdır.
+Pub/sub (044) **hamıya eyni** mesajı göndərir. Biz isə fərqli məzmun istəyirik.
 
 ## Variantlar
 | Variant | Necə |
 |---|---|
-| A. İki kanal | `room:{id}` (hamı, counts-suz) + `poll:{id}:voters` (səs verənlər). Səs verəndə müştəri ikinci kanala avtomatik abunə olur |
-| B. Gateway-də filtr | Gateway hər lokal bağlantı üçün "bu user səs veribmi?" yoxlayır (Redis set `poll:{id}:voters`) və payload-ı kəsir |
-| C. Yalnız siqnal | Hamıya `{poll_id, version}`, səs verənlər REST ilə çəkir |
+| **A. İki kanal** | `room:{id}` (hamıya, rəqəmsiz) + `poll:{id}:voters` (yalnız səs verənlərə). Səs verəndə frontend ikinci kanala abunə olur |
+| B. Serverdə süzgəc | Server hər bağlantı üçün "bu adam səs veribmi?" yoxlayır, rəqəmləri kəsir |
+| C. Yalnız siqnal | Hamıya "dəyişdi" göndər, səs verənlər REST ilə soruşsun. Problem: 1000 nəfər eyni anda soruşur |
 
-A sadə və ucuzdur. B çevikdir, amma hər mesajda Redis yoxlaması. C ən sadədir, amma 1 000 nəfər eyni anda GET edir ("thundering herd").
-Tövsiyə: A. Qərarını yaz.
+**Tövsiyə: A** (sadə və ucuz). Seçimini yaz.
 
-## Necə edəcəksən
-1. Throttle: hər səsdə yox, maksimum 1–2 san.-də bir (047 kimi coalesce).
-2. Səs verəndə REST cavabı onsuz da counts qaytarır (062).
+## Nə edəcəksən
+Seyrəlt: hər səsdə yox, 1–2 saniyədə bir.
 
-## Qəbul meyarları
-- [ ] Səs verməmiş müştəri `poll.updated`-də counts almır (test: WS mesajını yoxla).
-- [ ] Səs vermiş müştəri yeni counts alır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Səs verməmiş müştəri yeniləmədə rəqəm almır (test).
+- [ ] Səs vermiş müştəri yeni rəqəmləri alır.

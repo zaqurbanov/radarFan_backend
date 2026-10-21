@@ -1,24 +1,27 @@
-# 020 — Logout və sessiya dəyişikliyi
+# 020 — Çıxış (logout)
 
-**Faza:** 1 · **Asılılıq:** 019 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 1 · **Əvvəl bitməli:** 019
 
-## Məqsəd
-Tərəfdaşda istifadəçi çıxanda və ya başqa hesaba keçəndə bizdə köhnə sessiya qalmasın.
+## Qısaca
+İstifadəçi bukmekerdə çıxanda və ya başqa hesaba keçəndə bizdə köhnə sessiya qalmasın.
 
-## Niyə
-Sənəd (bölmə 6): "Konteynerdə logout olduqda lokal məlumatlar və bağlantı sıfırlanır." Bölmə 9, bridge: `onSessionChanged(handler)`.
-
-Ssenari: ailədə bir telefon, ata çıxır, oğul girir. Köhnə WS bağlantısı (task 039) hələ atanın kanallarına abunədirsə, oğul atanın mesaj bildirişlərini görür.
+## Niyə lazımdır?
+Nümunə: ailədə bir telefon. Ata çıxır, oğul daxil olur. Atanın açıq WebSocket bağlantısı hələ işləyirsə, oğul atanın bildirişlərini görür.
 
 ## Endpoint
-| Metod | Yol | Nəticə |
-|---|---|---|
-| POST | /auth/logout | refresh token-ləri ləğv edir (B rejimi), bu sessiyanın WS bağlantılarını bağlayır |
+`POST /auth/logout`: sessiyanı bitirir, açıq WebSocket bağlantılarını bağlayır.
 
-## Necə edəcəksən
-1. Access token stateless-dir, "ləğv etmək" mümkün deyil. Seçimlər: qısa ömür (artıq 15 dəq.) + `token_version`, və ya `jti` blacklist (Redis, TTL = qalan ömür). Hansını seçirsən?
-2. Hər token-ə `sid` (session id) əlavə et. WS bağlantıları `sid` ilə qeyd olunsun ki, logout zamanı həmin sessiyanın bağlantılarını tapıb bağlaya biləsən (task 043).
+## Problem
+Access token **ləğv edilə bilmir**: 15 dəqiqə bitənədək işləyir. Seçimlər:
+- Redis-də "qara siyahı" (ləğv olunmuş token-lər, bitənədək saxlanır);
+- istifadəçidə `token_version` sayğacı: logout-da artır, köhnə versiyalı token rədd olunur.
 
-## Qəbul meyarları
-- [ ] Logout-dan sonra həmin access token ilə sorğu 401 alır (seçdiyin üsulla).
-- [ ] Logout-dan sonra açıq WS bağlantısı bağlanır.
+Birini seç və səbəbini yaz.
+
+## Nə edəcəksən
+1. Hər token-ə sessiya ID-si (`sid`) əlavə et. WebSocket bağlantıları bu `sid` ilə qeyd olunacaq (task 043), logout-da həmin bağlantıları tapıb bağlamaq olacaq.
+2. Logout endpoint-ini yaz.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Logout-dan sonra həmin access token ilə sorğu 401 alır.
+- [ ] (WebSocket hazır olandan sonra) logout açıq bağlantını bağlayır.

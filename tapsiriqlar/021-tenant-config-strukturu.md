@@ -1,45 +1,34 @@
-# 021 — TenantConfig strukturu (white-label)
+# 021 — Bukmekerin ayarları (TenantConfig)
 
-**Faza:** 1 · **Asılılıq:** 010 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 1 · **Əvvəl bitməli:** 010
 
-## Məqsəd
-Hər tenant-ın brendi, dili, timezone-u, aktiv funksiyaları və qaydaları strukturlaşdırılmış və validasiya olunmuş formada saxlansın.
+## Qısaca
+Hər bukmekerin brendi, dili, saat qurşağı, açıq funksiyaları və oyun qaydaları **yoxlanılmış**, səliqəli formada saxlansın.
 
-## Niyə
-- Sənəd (bölmə 6, White label): "TenantConfig-də tenant_id, name, logo_url, theme tokens, locale, timezone, enabled_sports, enabled_features, partner_adapter, feed_provider və XP rules version olur."
-- Sayt: brend **BetPulse**, şüar "Твой матч. Твои люди.", dil `ru`, tünd mövzu, lime vurğu rəngi. Sənəd isə RADAR.FAN və Azərbaycan dilindədir. Bu fərq tam olaraq config ilə həll olunur.
-- İndi `config: jsonb` tipsizdir (`notNull`, amma heç bir sxem yoxdur). Səhv yazılmış config frontend-i sındırır.
+## Niyə lazımdır?
+- Eyni tətbiq fərqli bukmekerlərdə fərqli görünür: saytda brend **BetPulse**, dil **rus**, tünd mövzu. Sənəddə isə RADAR.FAN, Azərbaycan dili. Bu fərq məhz ayarlarla həll olunur.
+- İndi `tenants.config` istənilən JSON qəbul edir. Səhv yazılmış ayar frontend-i sındırır.
 
-## Cədvəl
-`tenants` (mövcud) yenilənir:
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| slug | varchar unique | var |
-| name | varchar(100) NOT NULL | brend adı (BetPulse) |
-| mode | enum | task 015 |
-| locale | varchar(10) NOT NULL | `ru`, `az`, `en` |
-| timezone | varchar NOT NULL | IANA ad (`Asia/Baku`). Gündəlik limit (task 080) buna əsaslanır |
-| rules_version | int | XP qaydaları versiyası |
-| config | jsonb NOT NULL | aşağıdakı sxem |
+## Sütun, yoxsa JSON?
+- **Sütun:** sorğularda istifadə olunanlar (`timezone`, `mode`, `locale`, `name`).
+- **JSON (`config`):** yalnız frontend-ə göndərilənlər.
 
-**`config` JSON sxemi** (zod ilə validasiya):
-- `branding`: `logo_url`, `tagline`, `theme` { `mode`: dark/light/both, `tokens`: { `accent`, `background`, ... } }
-- `enabled_sports`: [`football`, `basketball`]
-- `enabled_features`: { `community`, `stories`, `quiz_battle`, `find_pair`, `predictions`, `shop`, `coupon`, `handoff` } (boolean)
-- `partner_adapter`: { `type`: native/postMessage, `allowed_origins`: [...] }
-- `feed_provider`: { `type`: demo/..., `stale_after_seconds`: 15 }
-- `economy`: { `starting_coins`: 300, `coins_per_correct`: 20, `xp_per_correct`: 50, `xp_battles_per_day`: 3, `challenge_xp`: 100 }
-- `retention`: task 126
+## `config` içində nələr olacaq
+- `branding`: loqo, şüar, rənglər
+- `enabled_sports`: `football`, `basketball`
+- `enabled_features`: hansı bölmələr açıqdır (çat, hekayələr, viktorina, mağaza, proqnoz, kupon...)
+- `economy`: başlanğıc coin (300), cavab başına XP (50) və coin (20), gündə neçə duel XP verir (3), tapşırıq mükafatı (100)
+- `feed_provider`: əmsal neçə saniyədən sonra köhnəlir (15)
 
-**Niyə bəziləri sütun, bəziləri JSON?** Sorğularda istifadə olunanlar (timezone, mode, locale) sütun; yalnız frontend-ə göndərilənlər JSON.
+## Nə edəcəksən
+1. Config üçün zod sxemi yaz. Seed-də, admin-də və bazadan oxuyanda istifadə et.
+2. Config-i iki hissəyə böl:
+   - **açıq:** frontend-ə gedir (brend, rənglər, funksiyalar);
+   - **gizli:** heç vaxt frontend-ə getmir (bukmekerin açarları, feed şifrələri).
+3. Config hər sorğuda lazımdır. Keşlə, dəyişəndə keşi təmizlə.
+4. `economy` dəyişəndə `rules_version` artmalıdır. Niyə? (İpucu: başlamış duel köhnə qaydalarla bitməlidir.)
 
-## Necə edəcəksən
-1. Zod sxemi yaz və həm seed-də, həm admin endpoint-ində (task 115), həm DB-dən oxuyanda (`parse`) istifadə et.
-2. Config-in **public** hissəsini (frontend-ə) və **private** hissəsini (feed açarları, adapter secret-ləri) ayır. Private heç vaxt `/me` cavabına düşməməlidir. Sənəd: "Onun açarları və məxfi məlumatları WebView-a daxil olmur."
-3. Config hər sorğuda lazımdır. Yaddaşda/Redis-də keşlə, dəyişəndə invalidasiya et.
-4. `economy` qaydaları dəyişəndə `rules_version` artmalıdır. Niyə? (Battle başlayanda versiya sabitlənir, bölmə 5.)
-
-## Qəbul meyarları
-- [ ] Etibarsız config ilə tenant yaratmaq mümkün deyil.
-- [ ] `/me` cavabında `config` yalnız public sahələri saxlayır.
-- [ ] Demo tenant seed-də BetPulse brendi, `ru` dili ilə yaradılır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Səhv config ilə tenant yaratmaq mümkün deyil.
+- [ ] `/me` cavabında config-in yalnız açıq hissəsi var.
+- [ ] Demo tenant seed-də BetPulse brendi və rus dili ilə yaranır.

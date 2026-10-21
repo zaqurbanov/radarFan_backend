@@ -1,34 +1,28 @@
-# 110 — Handoff yoxlamaları
+# 110 — Bukmekerə keçiddən əvvəl yoxlamalar
 
-**Faza:** 9 · **Asılılıq:** 109, 022, 029 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 9 · **Əvvəl bitməli:** 109, 022, 029
 
-## Məqsəd
-Handoff yalnız bütün şərtlər ödəndikdə yaradılsın.
+## Qısaca
+Keçid yalnız **bütün** şərtlər ödənəndə olsun.
 
-## Niyə
-- Sənəd (bölmə 3): "Server istifadəçini, hadisənin statusunu, bazarı, qiymətin aktuallığını və tərəfdaşın məhdudiyyətlərini yoxlayır."
-- Bölmə 6: "Yaş və coğrafi uyğunluq, self-exclusion və betting_handoff icazəsini tərəfdaş verir; server kupona keçiddən əvvəl bunları yoxlayır. Sistem tərəfdaşın rədd cavabından yayınmağa çalışmır."
-- Bölmə 11: "suspended və stale nəticə kupona ötürülə bilməz".
-
-## Yoxlama siyahısı (ardıcıllıqla)
-| # | Yoxlama | Xəta |
+## Yoxlamalar (bu sıra ilə)
+| # | Nə yoxlanır | Ödənmirsə |
 |---|---|---|
-| 1 | Feature `handoff` aktiv (021) | 403 |
-| 2 | Entitlement `betting_handoff` (022), **sessiyadan təzə** | 403 `ACCESS_DENIED` |
-| 3 | User active (018) | 403 `USER_RESTRICTED` |
-| 4 | Feed sağlamdır (038) | 503 `FEED_UNAVAILABLE` |
-| 5 | Hər seçim üçün: event bu tenant-da, `live`/`scheduled` | 409 `OUTCOME_UNAVAILABLE` |
-| 6 | Market `open`, outcome `active` | 409 `OUTCOME_UNAVAILABLE` |
-| 7 | Stale deyil (15 san.) | 409 `OUTCOME_UNAVAILABLE` (və ya ayrı `ODDS_STALE`) |
-| 8 | `odds_version` = cari | 409 `ODDS_CHANGED` (111) |
+| 1 | Funksiya açıqdır | 403 |
+| 2 | `betting_handoff` icazəsi var (sessiyadan təzə oxu) | 403 `ACCESS_DENIED` |
+| 3 | İstifadəçi bloklanmayıb | 403 `USER_RESTRICTED` |
+| 4 | Matç mənbəyi işləyir | 503 `FEED_UNAVAILABLE` |
+| 5 | Hər seçim: matç bu tenant-dadır, canlıdır və ya gözlənilir | 409 `OUTCOME_UNAVAILABLE` |
+| 6 | Bazar açıqdır, əmsal aktivdir | 409 `OUTCOME_UNAVAILABLE` |
+| 7 | Əmsal köhnəlməyib (15 san.) | 409 `OUTCOME_UNAVAILABLE` |
+| 8 | Versiya cari versiyadır | 409 `ODDS_CHANGED` (111) |
 | 9 | Bir matça bir seçim | 400 |
-| 10 | Rate limit (məs. dəqiqədə 10 handoff) | 429 |
+| 10 | Sürət limiti (dəqiqədə ~10) | 429 |
 
-## Necə edəcəksən
-1. Bütün seçimləri bir dəfədə yoxla və **bütün** problemləri `details`-də qaytar (frontend hamısını birdən göstərsin), ilk xətada dayanma.
-2. Outcome-ları `FOR SHARE` ilə oxumaq lazımdırmı? Yoxlama ilə handoff insert arasında qiymət dəyişə bilər. Bu, milisaniyələrdir və tərəfdaş onsuz da öz tərəfində qiyməti yenidən yoxlayır. Sadə saxla, amma bu riski başa düş.
-3. Bu yoxlamaların 5–8-i proqnozlarda (098) da var. Ortaq funksiya.
+## Nə edəcəksən
+1. Bütün seçimləri yoxla və **bütün** problemləri birdən `details`-də qaytar. Birincidə dayanma, frontend hamısını göstərsin.
+2. 5–8-ci yoxlamalar proqnozlarda (098) da var, kodu **paylaş**.
 
-## Qəbul meyarları
+## Hazır olduğunu necə yoxlayarsan
 - [ ] Hər sətir üçün test.
-- [ ] Entitlement olmadan heç bir handoff yaranmır.
+- [ ] İcazəsiz heç bir keçid yaranmır.

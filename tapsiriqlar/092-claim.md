@@ -1,28 +1,35 @@
-# 092 — Mükafatın alınması: `POST /challenges/{id}/claim`
+# 092 — Mükafatı almaq: `POST /challenges/{id}/claim`
 
-**Faza:** 6 · **Asılılıq:** 091, 083, 036 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 091, 083, 036
 
-## Məqsəd
+## Qısaca
 3 tapşırıq bitəndə istifadəçi 100 XP-ni **dəqiq bir dəfə** alsın.
 
-## Niyə
-- Sənəd (bölmə 5): "Üç tapşırıqdan sonra status claimable olur. POST /challenges/{id}/claim bir tranzaksiyada 100 XP verir və statusu claimed edir. Təkrar artıq verilmiş mükafatı qaytarır."
-- Bölmə 8: → `award_id, awarded_xp, xp_balance`. 409 `CHALLENGE_NOT_READY`.
-- Bölmə 11: "Tapşırıqlar tamamlanmadan claim rədd edilir. Tamamlandıqdan sonra dəqiq 100 XP verilir; eyni vaxtda iki claim bir ledger qeydi yaradır."
-- Bölmə 2: "Offline zamanı göndərmə və mükafatın alınması aydın statusla bloklanır; server cavabından əvvəl interfeys uğur bildirmir."
+## Qaydalar (sənəddən)
+- Tapşırıqlar bitməyibsə → 409 `CHALLENGE_NOT_READY`.
+- Bitibsə → bir tranzaksiyada 100 XP + status `claimed`.
+- Təkrar → **eyni** cavab, yeni XP yox.
+- Eyni anda iki claim → **bir** jurnal sətri.
+- İnternet yoxdursa, frontend server cavabından əvvəl "uğurlu" göstərməməlidir.
 
-## Tranzaksiya
-1. Idempotency-Key məcburi (036).
-2. `SELECT ... FROM challenge_progress WHERE ... FOR UPDATE`.
-3. `status = in_progress` → 409 `CHALLENGE_NOT_READY` (`details`: hansı tapşırıqlar qalıb).
-4. `status = claimed` → mövcud ledger qeydini tap, **eyni** cavabı qaytar (200).
-5. `claimable` → `awardXp(100, source_type=challenge, source_id=challenge_id)` + `status = claimed`, `claimed_at`.
-6. Outbox: `xp.updated`, `challenge.updated`.
-7. Analitika: `challenge_claimed` (commit-dən sonra, serverdə).
+## Addımlar (bir tranzaksiyada)
+1. Idempotency-Key məcburidir (036).
+2. İrəliləyişi kilidlə və oxu (`FOR UPDATE`).
+3. `in_progress` → 409 (`details`-də qalan tapşırıqlar).
+4. `claimed` → köhnə jurnal sətrini tap, **eyni** cavabı qaytar.
+5. `claimable` → 100 XP ver + `claimed` et.
+6. Bildirişlər: `xp.updated`, `challenge.updated`.
 
-**Üç qat qoruma:** idempotency key + `FOR UPDATE` + ledger unique. Niyə üçü də? Hər biri fərqli xəta sinfini tutur. Özün izah et.
+## Üç qat qoruma: niyə üçü də?
+| Qoruma | Nəyi tutur |
+|---|---|
+| Idempotency-Key | eyni sorğunun təkrarı (şəbəkə) |
+| `FOR UPDATE` kilidi | eyni anda iki fərqli sorğu |
+| Jurnalda unique qayda | kodda səhv olsa belə, son müdafiə |
 
-## Qəbul meyarları
-- [ ] 2/3 → 409 `CHALLENGE_NOT_READY`.
-- [ ] 3/3 → 100 XP; ikinci claim → eyni `award_id`, balans dəyişmir.
-- [ ] Fərqli idempotency key-li 2 paralel claim → bir ledger qeydi (test).
+Özün izah et: hər biri olmasa nə baş verərdi?
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] 2/3 bitib → 409.
+- [ ] 3/3 → 100 XP. İkinci claim → eyni `award_id`, balans dəyişmir.
+- [ ] Fərqli açarlarla eyni anda 2 claim → bir jurnal sətri (test).

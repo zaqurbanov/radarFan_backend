@@ -1,38 +1,34 @@
-# 015 — Demo rejim və demo launch token
+# 015 — Demo rejim
 
-**Faza:** 1 · **Asılılıq:** 014 · **Status:** [ ]
-(Köhnə `TASKS.md`: T5)
+**Status:** [ ] · **Faza:** 1 · **Əvvəl bitməli:** 014
 
-## Məqsəd
-Demo funksiyaları (demo launch token, demo bot, demo feed, "Сбросить демо") yalnız demo rejimdə işləsin. Production-da bu endpoint-lər **mövcud olmasın**.
+## Qısaca
+Demo funksiyalar (demo token, demo bot, demo matçlar, "Сбросить демо") yalnız demo rejimdə işləsin. Production-da bu endpoint-lər **ümumiyyətlə olmasın**.
 
-## Niyə
-- Sənəd (bölmə 6, White label): "Demo və ya production rejimi serverdə təyin edilir. Müştəri production-da demo botunu aktivləşdirə və XP qaydalarını özü dəyişə bilməz."
-- `/demo-launch-token` hazırda hər kəsə istənilən istifadəçi üçün sessiya verir. Production-da bu, autentifikasiyanın tam yan keçilməsi deməkdir.
-- Saytda hər yerdə "демо" etiketi var. Bu, sənədin tələbidir: "Canlı məlumatları işarələmədən demo məlumatları ilə əvəz etmək qadağandır".
+## Niyə lazımdır?
+- `/demo-launch-token` indi **hər kəsə** istənilən istifadəçi kimi giriş verir. Production-da bu, şifrəsiz qapı deməkdir.
+- Sənəd: demo/production rejimini **server** təyin edir, istifadəçi yox.
+- Saytda hər yerdə "демо" yazısı var. Sənəd tələb edir ki, demo məlumat həmişə işarəli olsun.
 
-## Qərar: rejim harada saxlanır?
-İki səviyyə var, ikisi də lazımdır:
+## İki səviyyə
 | Səviyyə | Harada | Nəyi idarə edir |
 |---|---|---|
-| Server rejimi | env `APP_MODE=demo/production` | Demo route-ları ümumiyyətlə qeyd olunsunmu |
-| Tenant rejimi | `tenants.mode` enum(demo, production) | Bu tenant demo feed, demo bot, demo etiketləri istifadə edirmi |
+| Server | env `APP_MODE=demo/production` | Demo route-lar ümumiyyətlə qeydiyyatdan keçsinmi |
+| Tenant | `tenants.mode` sütunu | Bu bukmeker demo matç, demo bot istifadə edirmi |
 
-Production serverdə də "demo tenant" ola bilər (staging-də tərəfdaşa göstərmək üçün). Amma `/demo-launch-token` yalnız `APP_MODE=demo`-da olur.
+Production serverdə də "demo tenant" ola bilər (məsələn, bukmekerə nümayiş üçün). Amma `/demo-launch-token` yalnız `APP_MODE=demo`-da olur.
 
-## Cədvəllər
-`tenants`-ə sütun: `mode` enum(`demo`, `production`) NOT NULL default `demo`.
+## Nə edəcəksən
+1. `APP_MODE`-u `env.ts`-ə əlavə et.
+2. `tenants` cədvəlinə `mode` sütunu əlavə et (`demo`/`production`). Bu, migration tələb edir.
+3. Demo route-ları ayrıca modula köçür (`modules/demo`). `app.ts`-də yalnız `APP_MODE === 'demo'` olanda qeydiyyatdan keçsin.
+4. Demo token-i demo tenant-ın gizli açarı ilə imzala (task 014). Beləcə `/auth/exchange` demo və real token-i **eyni yolla** yoxlayır. Ayrıca "demo üçün qısa yol" olmamalıdır.
+5. Tenant yaratmağı route-dan çıxar. Bu, seed-in işidir.
 
-## Necə edəcəksən
-1. Demo route-ları ayrıca plugin-ə çıxar (`modules/demo`). `app.ts`-də yalnız `APP_MODE === 'demo'` olduqda qeydiyyatdan keçir.
-2. Demo launch token generatoru demo tenant-ın **private key**-i ilə imzalasın (task 014). Beləliklə `/auth/exchange` demo və real token-i **eyni yolla** yoxlayır. Ayrıca "demo bypass" olmamalıdır.
-3. Demo istifadəçi: saytda `Nihal`. Hər brauzer üçün fərqli demo istifadəçi lazımdırmı? (Body-də `external_user_id` qəbul etmək vs sabit ID.) Fikirləş: bir neçə nəfər eyni anda demo-ya baxsa, eyni XP-ni paylaşacaqlar.
-4. Tenant yaradılmasını route-dan çıxar. Bu, seed-in işidir (task 007).
+## Fikirləş
+Bir neçə nəfər eyni anda demo-ya baxsa, hamısı eyni `Nihal` istifadəçisi olur və XP-ni paylaşır. Bu problemdirmi? Hər brauzerə ayrı demo istifadəçi lazımdırmı?
 
-## Tələlər
-- Rejim yoxlaması yalnız route qeydiyyatında olsun, hər sorğuda `if` ilə yox. Unudulmuş `if` = deşik.
-
-## Qəbul meyarları
+## Hazır olduğunu necə yoxlayarsan
 - [ ] `APP_MODE=production` ilə `/demo-launch-token` → 404.
-- [ ] Demo token `/auth/exchange`-dən real token kimi keçir (eyni kod yolu).
-- [ ] `tenants.mode` sütunu var və `/me` cavabındakı config-də görünür.
+- [ ] Demo token `/auth/exchange`-dən real token kimi keçir.
+- [ ] `/me` cavabında tenant-ın `mode`-u görünür.

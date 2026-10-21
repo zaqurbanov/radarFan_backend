@@ -1,29 +1,32 @@
-# 032 — Lentin sıralama qaydası
+# 032 — Lentin sıralaması
 
-**Faza:** 2 · **Asılılıq:** 030; aktiv iştirakçı hissəsi 046-dan sonra · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 030 (aktivlik hissəsi 046-dan sonra)
 
-## Məqsəd
+## Qısaca
 Lent sənəddəki qaydaya görə sıralansın.
 
-## Niyə
-Sənəd (bölmə 3): "İlkin sıralama: live scheduled-dan əvvəl; qrup daxilində aktiv iştirakçıların sayı azalan sıra ilə, sonra start_at və event_id. Bitmiş matçlar seçilmişlərdə və otağın tarixçəsində əlçatandır; onlar üçün yeni nəticələrin açılması söndürülür. Fərdiləşdirilmiş sıralama MVP-dən sonrakı ayrıca tapşırıqdır."
+## Qayda (sənəddən)
+1. Əvvəl **canlı** (`live`), sonra **gözlənilən** (`scheduled`).
+2. Eyni qrupda: **çox aktiv iştirakçısı olan** yuxarıda.
+3. Sonra başlama vaxtı, sonra `id`.
+4. **Bitmiş** matçlar əsas lentdə yoxdur, yalnız "Seçilmişlər"də görünür (əmsalları bağlı).
 
-İndiki kod: `CASE WHEN live THEN 0 ELSE 1` + `start_at`. `postponed`, `cancelled`, `finished` də "1" qrupuna düşür və scheduled-larla qarışır.
+## İndiki problem
+İndi yalnız "canlı əvvəl" var. `postponed`, `cancelled`, `finished` hamısı bir qrupa düşür və gözlənilənlərlə qarışır.
 
-## Qərar verməli olduğun məsələlər
-1. **Statuslar üçün rank:** live=0, scheduled=1, postponed=2? finished və cancelled əsas lentdə ümumiyyətlə görünsünmü? Sənəd: bitmiş matçlar "seçilmişlərdə və otağın tarixçəsində". Deməli əsas lentdə yoxdur, `favorites=true` filtrində var.
-2. **Aktiv iştirakçı sayı** Redis-dədir (task 046) və saniyədə dəyişir. Cursor ilə necə birləşir? Variantlar:
-   - (a) hər N saniyədə bir "snapshot" sıralama hesabla və Redis-də saxla (sorted set), cursor = mövqe + snapshot id;
-   - (b) sıralamanı DB-dəki `events.active_users_snapshot` sütunu ilə et (fon job hər 10–30 san. yeniləyir);
-   - (c) yalnız birinci səhifəni aktivliyə görə sırala.
-   Tövsiyə: (b), sadə və cursor ilə işləyir. Sənəd buna icazə verir ("ilkin sıralama").
-3. Sıralamanı DB-də generated column (`status_rank`) ilə etsən, index-ə daxil edə bilərsən. Araşdır.
+## Çətin hissə: aktiv iştirakçı sayı
+Bu say Redis-dədir (task 046) və hər saniyə dəyişir. Cursor ilə necə birləşdirmək olar?
+
+**Tövsiyə:** `events` cədvəlinə `active_users` sütunu əlavə et. Fon tapşırığı onu hər 10–30 saniyədə Redis-dən yeniləsin. Sıralama bazada olur və cursor işləyir. Sənəd "ilkin sıralama" deyir, bu kifayətdir.
 
 ## Cədvəl dəyişikliyi
-`events`: `status_rank smallint GENERATED ALWAYS AS (...) STORED`, `active_users int NOT NULL default 0`.
-Index: (`tenant_id`, `status_rank`, `active_users DESC`, `start_at`, `id`). Sənəddəki `tenant/status/start_at` index-ini bununla əvəz edə bilərsən.
+`events`-ə:
+- `status_rank`: statusdan **avtomatik** hesablanan rəqəm (live=0, scheduled=1...). Postgres-in "generated column" xüsusiyyətini araşdır.
+- `active_users`: aktiv iştirakçı sayı.
 
-## Qəbul meyarları
-- [ ] live matçlar həmişə scheduled-dan əvvəldir.
+Index: (`tenant_id`, `status_rank`, `active_users`, `start_at`, `id`).
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Canlı matçlar həmişə gözlənilənlərdən əvvəldir.
 - [ ] Eyni statusda çox aktiv olan yuxarıdadır.
-- [ ] Bitmiş matç əsas lentdə yoxdur, `favorites=true`-da var və outcome-ları `available: false`-dir.
+- [ ] Bitmiş matç əsas lentdə yoxdur, seçilmişlərdə var.

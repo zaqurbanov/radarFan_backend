@@ -1,26 +1,31 @@
-# 038 — Feed əlçatmazlığı (503 FEED_UNAVAILABLE)
+# 038 — Matç mənbəyi dayananda
 
-**Faza:** 2 · **Asılılıq:** 025, 029 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 025, 029
 
-## Məqsəd
-Provayder dayananda sistem dürüst davransın: köhnə məlumatı "canlı" kimi göstərməsin, handoff-u bağlasın, amma lent və çat işləməyə davam etsin.
+## Qısaca
+Mənbə işləmirsə: köhnə məlumatı "canlı" kimi göstərmə, bukmekerə keçidi bağla. Amma lent və çat **işləməyə davam etsin**.
 
-## Niyə
-- Sənəd (bölmə 8): 503 `FEED_UNAVAILABLE`. Bölmə 10: "Məlumat axınının əlçatmazlığına ... alarmlar qurulmalıdır". Bölmə 11: "tərəfdaşın əlçatmazlığı yoxlanılıb".
-- Bölmə 2: "Xəta vəziyyətinin göstərilməsi əvvəl yüklənmiş məzmunu silmir."
+## Niyə lazımdır?
+- Sənəd: 503 `FEED_UNAVAILABLE`.
+- Sənəd: xəta göstərilməsi **əvvəl yüklənmiş məzmunu silmir**.
+- Mənbə dayandı deyə bütün tətbiqin dayanması pis təcrübədir.
 
-## Necə edəcəksən
-1. Feed sağlamlığı: son uğurlu yeniləmənin vaxtı Redis-də (`feed:{tenant}:last_ok`). Hədd keçibsə → "degraded".
-2. Degraded rejimdə davranış:
-   | Endpoint | Davranış |
-   |---|---|
-   | GET /events | 200, köhnə məlumat + `feed_status: "degraded"`, bütün outcome-lar `available: false` |
-   | POST /handoffs | 503 `FEED_UNAVAILABLE` |
-   | Çat, oyunlar | normal |
-   Lent 503 qaytarmalıdır, yoxsa 200 + status? Sənəd 503-ü verir, amma "əvvəlki məzmunu silmir" qaydası 200 + status-u dəstəkləyir. Qərar ver və əsaslandır.
-3. Circuit breaker pattern haqqında oxu: provayder dayananda hər sorğuda ona müraciət etmə.
-4. Monitorinq üçün metrik (task 125): `feed_lag_seconds`.
+## Davranış
+| Endpoint | Mənbə dayananda |
+|---|---|
+| `GET /events` | Köhnə məlumat + `feed_status: "degraded"`, bütün əmsallar bağlı |
+| Bukmekerə keçid | 503 `FEED_UNAVAILABLE` |
+| Çat, oyunlar | Normal işləyir |
 
-## Qəbul meyarları
-- [ ] Demo feed dayandırılanda 15+ san. sonra outcome-lar əlçatmaz olur, lent isə işləyir.
-- [ ] Feed bərpa olunanda avtomatik normal rejimə qayıdır.
+## Nə edəcəksən
+1. Son uğurlu yeniləmənin vaxtını Redis-də saxla.
+2. Çoxdan yenilənməyibsə → "degraded" rejim.
+3. Mənbə qayıdanda avtomatik normal rejimə keç.
+4. "Circuit breaker" anlayışını oxu: mənbə dayananda hər sorğuda ona müraciət etmə.
+
+## Qərar ver
+Lent 503 qaytarsın, yoxsa 200 + `feed_status`? Sənəd 503 deyir, amma "köhnə məzmunu silmə" qaydası 200-ü dəstəkləyir. Seç və səbəbini yaz.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Demo mənbəni dayandır → 15+ saniyədən sonra əmsallar bağlanır, lent işləyir.
+- [ ] Mənbə qayıdanda hər şey özü düzəlir.

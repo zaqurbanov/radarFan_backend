@@ -1,38 +1,36 @@
-# 026 — Demo feed provayderi (simulyasiya)
+# 026 — Demo matçlar (canlı simulyasiya)
 
-**Faza:** 2 · **Asılılıq:** 025 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 025
 
-## Məqsəd
-Real provayder olmadan saytdakı kimi "canlı" matçlar: hesab dəyişir, dəqiqə irəliləyir, əmsallar yenilənir. Hamısı **demo** işarəsi ilə.
+## Qısaca
+Real provayder olmadan saytdakı kimi "canlı" matçlar: dəqiqə irəliləyir, hesab dəyişir, əmsallar yenilənir. Hamısı **"демо"** işarəsi ilə.
 
-## Niyə
-- Sənəd (bölmə 1): "Lokal demo üçün test məlumatlarından istifadə edilə bilər... Canlı məlumatları işarələmədən demo məlumatları ilə əvəz etmək qadağandır."
-- Bölmə 11: "Bu məlumatlar olmadan daxili MVP-ni test məlumatları ilə reallaşdırmaq olar."
-- Sayt: hər kartda "● ДЕМО LIVE", "1 284 фанатов · демо", "Демо-статистика".
-- Real-time (WS, task 047) və aktuallıq (task 029) funksiyalarını test etmək üçün **dəyişən** məlumat lazımdır.
+## Niyə lazımdır?
+- Hələ real mənbə yoxdur, amma real vaxt funksiyalarını (WebSocket, köhnəlmiş əmsal) yoxlamaq üçün **dəyişən** məlumat lazımdır.
+- Sənəd: demo məlumat həmişə **işarəli** olmalıdır.
 
-## Saytdakı demo məlumatlar
+## Saytdakı demo matçlar
 | Matç | Liqa | Hesab | Dövr | Əmsallar |
 |---|---|---|---|---|
-| Реал Мадрид — Барселона (RM/FCB) | Футбол · Испания | 2:1 | 67′ | П1 1.72, X 3.80, П2 4.20 |
-| Бостон — Лейкерс (BOS/LAL) | Баскетбол · NBA | 84:79 | 3-я четверть | П1 1.65, П2 2.30 |
-| Арсенал — Ливерпуль (ARS/LIV) | Футбол · Англия | 0:0 | 21′ | П1 2.40, X 3.10, П2 2.85 |
+| Реал Мадрид — Барселона | Испания | 2:1 | 67′ | 1.72 / 3.80 / 4.20 |
+| Бостон — Лейкерс | NBA | 84:79 | 3-я четверть | 1.65 / 2.30 |
+| Арсенал — Ливерпуль | Англия | 0:0 | 21′ | 2.40 / 3.10 / 2.85 |
 
-Redaksiya qeydləri: "Какая передача перед вторым голом! 🔥", "Бостон прибавил в защите!", "Кто первым откроет счёт?".
-
-## Necə edəcəksən
-1. Provayder `FeedProvider` interfeysini həyata keçirir (025).
-2. Simulyasiya qaydaları (sadə saxla):
+## Nə edəcəksən
+1. Demo provayder yaz (025-dəki interfeys ilə).
+2. Sadə simulyasiya qaydaları:
    - hər N saniyədə dəqiqə +1;
-   - kiçik ehtimalla qol və ya xal → hesab dəyişir, `version` artır;
-   - əmsallar kiçik təsadüfi dəyişir, `version` artır, `updated_at` yenilənir;
-   - bəzən market `suspended` olur (qoldan dərhal sonra, real bukmekerlərdəki kimi). Bu, task 111-i test etməyə imkan verir.
-   - matç bitəndə `finished`.
-3. Simulyasiyanı **deterministik** etmək imkanı (seed ədədi). Testlərdə təsadüfilik problem yaradır.
-4. Simulyasiya fon tapşırığı kimi işləyir (task 049). Bir neçə server instansiyası varsa, simulyasiya **yalnız birində** işləməlidir. Bunu necə təmin edəcəksən? (Redis lock, task 049.)
-5. "Reset" imkanı: matçları ilkin vəziyyətə qaytarmaq (task 118, "Сбросить демо").
+   - kiçik ehtimalla qol → hesab dəyişir, versiya artır;
+   - əmsallar azca dəyişir, versiya artır;
+   - qoldan sonra bazar qısa müddət `suspended` olur (real bukmekerlər kimi);
+   - matç bitəndə status `finished`.
+3. Simulyasiyanı **təkrarlana bilən** et (sabit "seed" ədədi ilə). Testlərdə təsadüfilik problem yaradır.
+4. Bütün demo matçlarda `is_demo: true`.
 
-## Qəbul meyarları
-- [ ] Demo rejimdə server işləyəndə hesab və əmsallar vaxtaşırı dəyişir.
-- [ ] Bütün demo hadisələr API-də `is_demo: true` ilə qayıdır.
-- [ ] Production tenant-da demo provayder seçilə bilməz.
+## Diqqət
+Bir neçə server işləsə, simulyasiya **yalnız birində** işləməlidir. Yoxsa hesab iki dəfə dəyişər. Həlli task 049-dadır (Redis lock).
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Server işləyəndə hesab və əmsallar vaxtaşırı dəyişir.
+- [ ] Bütün demo matçlar API-də `is_demo: true` ilə gəlir.
+- [ ] Production tenant-da demo provayder seçilə bilmir.

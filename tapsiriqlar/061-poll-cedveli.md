@@ -1,54 +1,46 @@
-# 061 — Poll cədvəli ("Кто победит?")
+# 061 — Sorğu: "Кто победит?"
 
-**Faza:** 4 · **Asılılıq:** 050, 028 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 050, 028
 
-## Məqsəd
-Hər otaqda bir "kim qalib gələcək" sorğusu.
+## Qısaca
+Hər otaqda bir "kim qalib gələcək?" sorğusu.
 
-## Niyə
-- Sənəd (bölmə 4, Səsvermə): "Room başına bir aktiv poll olur; «Kim qalib gələcək?» sualı üçün uyğun hallarda ev sahibi, heç-heçə və qonaq variantları istifadə edilir. Basketbol moneyline üçün yalnız iki komanda olur."
-- Bölmə 7: poll — room_id, options, closes_at.
-- Sayt: "Кто победит?" → futbolda yalnız **RM / FCB** (heç-heçə yoxdur!).
-- Bölmə 2: prototipdə "Sabit 62 və 38 faiz", MVP-də "Real aqreqatlar".
+## Qaydalar (sənəddən)
+- Otaqda eyni anda **bir** aktiv sorğu.
+- Basketbolda 2 variant (ev sahibi / qonaq).
+- Futbolda: sənəd "uyğun hallarda heç-heçə də" deyir, **sayt isə yalnız 2 variant** göstərir (RM / FCB).
 
-## Cədvəllər
+## Yeni cədvəllər
 **`polls`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | |
-| tenant_id | uuid | |
-| room_id | uuid FK | |
-| question_key | varchar(50) | `who_wins` (lokallaşdırma frontend-də) |
-| status | enum(`open`, `closed`) | |
-| closes_at | timestamptz | |
-| closed_at | timestamptz NULL | |
-| version | int default 1 | `poll.updated` üçün (065) |
-| total_votes | int default 0 | denormalizasiya |
-| created_at | timestamptz | |
+| Sütun | İzah |
+|---|---|
+| id, tenant_id, room_id | |
+| question_key | `who_wins` (mətni frontend tərcümə edir) |
+| status | `open` / `closed` |
+| closes_at, closed_at | |
+| version | dəyişiklik sayğacı (065) |
+| total_votes | ümumi səs sayı |
+| created_at | |
 
-Partial UNIQUE: (`room_id`) WHERE `status = 'open'`. "Room başına bir **aktiv** poll" qaydasını DB səviyyəsində təmin edir. Partial unique index-i öyrən.
+**Qayda:** bir otaqda yalnız bir **açıq** sorğu. Bunu DB səviyyəsində "partial unique index" ilə et: unique (`room_id`) **yalnız** `status = 'open'` olanda.
 
 **`poll_options`**
-| Sütun | Tip |
+| Sütun | İzah |
 |---|---|
-| id | uuid PK |
-| poll_id | uuid FK |
-| key | varchar(20) (`home`, `draw`, `away`) |
-| position | smallint |
-| vote_count | int default 0 |
+| id, poll_id | |
+| key | `home` / `draw` / `away` |
+| position | sıra |
+| vote_count | səs sayı |
 
-UNIQUE (`poll_id`, `key`).
+**Niyə variantlar ayrı cədvəldə, JSON-da deyil?** Hər variantın sayğacını **atomar** artırmaq üçün. JSON içində sayğac artırmaq race condition yaradır.
 
-**Niyə options ayrıca cədvəldir, jsonb deyil?** `vote_count`-u atomar artırmaq üçün (062). JSON daxilində sayğac artırmaq race condition-a açıqdır.
+## Nə edəcəksən
+1. Sorğu otaqla birlikdə yaransın (050). Variantlar bazar tipindən (028).
+2. Heç-heçə üçün tenant ayarına `poll_include_draw` bayrağı əlavə et. Default: sayt kimi (heç-heçəsiz)?
 
-## Necə edəcəksən
-1. Poll otaqla birlikdə yaranır (050). Variantlar market tipindən (028).
-2. **Ziddiyyət:** sayt futbolda draw göstərmir, sənəd "uyğun hallarda" draw deyir. Tenant config-də `poll_include_draw` bayrağı et. Default: sayt kimi (draw yox)? Məhsul sahibinə soruş.
-3. `closes_at` = matçın sonu? Başlanğıcı? Sənəd: "Poll hadisə bitdikdə, ləğv edildikdə və ya closes_at vaxtında bağlanır." Canlı matçda da səs vermək olar (saytda matç canlıdır və səs verilir).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Bir otaqda iki açıq sorğu yaratmaq mümkün deyil (DB xətası verir).
+- [ ] Basketbol sorğusunda yalnız 2 variant var.
 
-## Qəbul meyarları
-- [ ] Bir otaqda iki açıq poll yaratmaq mümkün deyil (DB xətası).
-- [ ] Basketbol poll-unda yalnız 2 variant var.
-
-## Açıq suallar
-- Futbol poll-unda heç-heçə variantı olsunmu?
+## Açıq sual
+Futbol sorğusunda heç-heçə olsunmu?

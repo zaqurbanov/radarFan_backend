@@ -1,35 +1,36 @@
-# 099 — Proqnoz hesablaşması (settlement)
+# 099 — Proqnozların hesablanması
 
-**Faza:** 7 · **Asılılıq:** 098, 028, 049 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 7 · **Əvvəl bitməli:** 098, 028, 049
 
-## Məqsəd
-Matç bitəndə pending proqnozlar avtomatik hesablansın.
+## Qısaca
+Matç bitəndə gözləyən proqnozlar avtomatik hesablansın.
 
-## Niyə
-- Sayt: "Демо-расчёт использует показанный счёт матчей." Düymə: "**Рассчитать демо-прогнозы**". Demo-da istifadəçi hesablaşmanı əl ilə başladır, çünki demo matçlar heç vaxt bitmir.
-- Statuslar: Верный (+72 ед. = 100 × 1.72 − 100), Неверный (−100), Возврат (0).
+## Saytda
+- "Демо-расчёт использует показанный счёт матчей."
+- Düymə: "**Рассчитать демо-прогнозы**". Demo matçlar heç vaxt bitmir, ona görə hesablamanı istifadəçi başladır.
 
 ## Qaydalar
-| Vəziyyət | Status | return_units | Nəticə (profit) |
+| Hal | Status | Qaytarılan | Mənfəət |
 |---|---|---|---|
-| Outcome qalib | won | stake × price | stake × (price − 1) |
-| Outcome uduzdu | lost | 0 | −stake |
-| Matç ləğv / market void | void | stake | 0 |
+| Seçdiyi nəticə qalib | won ("Верный") | 100 × əmsal | 100 × (əmsal − 1) |
+| Uduzdu | lost ("Неверный") | 0 | −100 |
+| Matç ləğv | void ("Возврат") | 100 | 0 |
 
-Qalibi təyin edən: `marketDefinitions[type].settle(final_score)` (028). Basketbolda OT daxil.
+Nümunə: 1.72 qalib → qaytarılan 172, mənfəət **+72**.
 
-## Necə edəcəksən
-1. Real rejim: event `finished` (feed, 027) → job (049) → `settleEvent(event_id)`:
-   - bütün `pending` proqnozları seç (`FOR UPDATE SKIP LOCKED` batch-lərlə);
-   - hər biri üçün status + return_units, `settled_at`;
-   - idempotent: yalnız `pending`-ləri yeniləyir.
-2. `cancelled` event → hamısı `void`.
-3. **Demo rejim:** `POST /predictions/demo-settle`. Yalnız demo tenant-da (015). Cari (göstərilən) hesabla hesablayır. Bu, real rejimdə **heç vaxt** mövcud olmamalıdır. Niyə? Matç bitmədən "cari hesabla" hesablaşma = canlı matçda istifadəçi yalnız qalib gələnləri hesablatdıra bilər.
-4. Pul hesablaması: `numeric` (027). JS-də `100 * 1.72` = `171.99999999999997`. **JS number ilə hesablama**. DB-də hesabla və ya decimal kitabxanası (`decimal.js`) istifadə et.
-5. Feed hesabı sonradan düzəltsə (VAR qolu ləğv etdi)? Re-settlement. MVP üçün qeyd et, etmə.
+## Nə edəcəksən
+1. **Real rejim:** matç `finished` olur → fon işi → həmin matçın gözləyən proqnozlarını hesabla. Artıq hesablanmışlara toxunma (idempotent).
+2. Matç ləğv → hamısı `void`.
+3. **Demo rejim:** `POST /predictions/demo-settle` cari hesabla hesablayır. **Yalnız demo tenant-da!**
+   Niyə real rejimdə olmamalıdır? Canlı matçda istifadəçi yalnız qalib gələnləri "hesablatdıra" bilər.
+4. Qalibi `qalibi_tap(hesab)` funksiyası (028) təyin edir.
 
-## Qəbul meyarları
-- [ ] 1.72 əmsallı qalib proqnoz → return 172.00, profit 72.00 (dəqiq).
-- [ ] Ləğv olunmuş matç → void, profit 0.
-- [ ] Settlement iki dəfə işləsə nəticə dəyişmir.
+## Diqqət: JavaScript-də pul hesablaması
+`100 * 1.72` JS-də = `171.99999999999997`. **JS rəqəmləri ilə pul hesablama.**
+Ya bazada hesabla (`numeric`), ya da `decimal.js` kitabxanasını istifadə et.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] 1.72 qalib → qaytarılan **dəqiq** 172.00, mənfəət 72.00.
+- [ ] Ləğv olunmuş matç → void, mənfəət 0.
+- [ ] Hesablamanı iki dəfə işlət → nəticə dəyişmir.
 - [ ] Production tenant-da demo-settle → 404.

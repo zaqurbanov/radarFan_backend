@@ -1,48 +1,43 @@
-# 051 — Message cədvəli və server sequence-i
+# 051 — Mesajlar cədvəli və sıra nömrəsi
 
-**Faza:** 4 · **Asılılıq:** 050 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 050
 
-## Məqsəd
-Mesajlar sıralanmış, dublikatsız, tenant-a bağlı saxlansın.
+## Qısaca
+Mesajlar ardıcıl nömrə ilə, dublikatsız saxlansın.
 
-## Niyə
-- Sənəd (bölmə 4): "Mesajlar server sequence-i ilə sıralanır."
-- Bölmə 7: Message — id, room_id, user_id, text, sequence, client_message_id, status, created_at; "otağın sequence-i və istifadəçinin göndərmə ID-si unikaldır".
-- **Niyə `created_at` ilə sıralamaq olmaz?** Eyni millisaniyədə iki mesaj; bir neçə serverin saatları fərqli; sequence boşluğu (itmiş mesaj) aşkar etmək üçün ardıcıl ədəd lazımdır.
+## Niyə vaxtla (`created_at`) sıralamaq olmaz?
+- Eyni millisaniyədə iki mesaj gələ bilər.
+- Bir neçə serverin saatı azca fərqli ola bilər.
+- Nömrədə boşluq (5-dən sonra 7) = "mesaj itib" deməkdir. Vaxtla bunu bilmək mümkün deyil.
 
-## Cədvəl
-**`messages`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | |
-| tenant_id | uuid NOT NULL | sənəd: "Hər predmet məlumatı cədvəlində tenant_id" |
-| room_id | uuid FK NOT NULL | |
-| user_id | uuid FK NOT NULL | |
-| sequence | bigint NOT NULL | otaq daxilində 1, 2, 3... |
-| client_message_id | uuid NOT NULL | müştərinin yaratdığı |
-| text | varchar(1000) NOT NULL | 240 code point = 960 bayta qədər (emoji 4 bayt) |
-| status | enum(`visible`, `hidden_by_moderator`, `deleted`) | |
-| is_demo | boolean default false | demo bot mesajları (070) |
-| like_count | int default 0 | denormalizasiya (059) |
-| created_at | timestamptz | |
-| hidden_at, hidden_by | NULL | moderasiya (067) |
-
-UNIQUE (`room_id`, `sequence`), UNIQUE (`user_id`, `client_message_id`).
-Index (`tenant_id`, `room_id`, `sequence DESC`). Sənəd bunu tələb edir.
-
-**Ad (nickname) saxlanmır.** Yalnız `user_id`. Ad dəyişəndə (024) köhnə mesajlarda yeni ad görünür.
-
-## Sequence necə yaradılır? (ən vacib dizayn sualı)
-| Variant | Mənfi tərəf |
+## Yeni cədvəl: `messages`
+| Sütun | İzah |
 |---|---|
-| `MAX(sequence)+1` | İki paralel insert eyni ədədi alır → unique xətası |
-| Postgres SEQUENCE otaq başına | 1 000 otaq = 1 000 DB obyekti |
-| Redis INCR | Redis və DB uyğunsuzlaşa bilər (rollback-da boşluq) |
-| **`UPDATE rooms SET last_sequence = last_sequence + 1 ... RETURNING last_sequence`** eyni tranzaksiyada | Otaq sətri qısa müddət kilidlənir; saniyədə 50 mesaj üçün problem deyil |
+| id | |
+| tenant_id | |
+| room_id | hansı otaq |
+| user_id | kim yazıb |
+| sequence | otaqdakı nömrəsi: 1, 2, 3... |
+| client_message_id | frontend-in verdiyi unikal ID |
+| text | mətn (240 simvola qədər, amma emoji 4 bayt olduğu üçün sütun daha geniş) |
+| status | `visible` / `hidden_by_moderator` / `deleted` |
+| is_demo | demo bot mesajı |
+| like_count | like sayı (task 059) |
+| created_at | |
+| hidden_at, hidden_by | moderasiya (task 067) |
 
-Tövsiyə: sonuncu. Niyə işləyir? `UPDATE` sətir kilidi götürür, ikinci tranzaksiya birincinin commit-ini gözləyir. Bu, "row-level lock serialization" adlanır.
+- Unique (`room_id`, `sequence`), unique (`user_id`, `client_message_id`).
+- Index (`tenant_id`, `room_id`, `sequence`).
+- **Ad saxlanmır**, yalnız `user_id`. Ad dəyişəndə köhnə mesajlarda yeni ad görünür.
 
-**Boşluq məsələsi:** tranzaksiya rollback olsa, `last_sequence` də geri qayıdır (eyni tranzaksiyadadır), boşluq olmur. Redis variantında isə olardı.
+## Ən vacib sual: sıra nömrəsini necə almaq?
+| Üsul | Problem |
+|---|---|
+| `MAX(sequence) + 1` | İki eyni anda gələn mesaj eyni nömrəni alır → xəta |
+| Redis `INCR` | Mesaj yazılmasa da nömrə artır → boşluq |
+| **`UPDATE rooms SET last_sequence = last_sequence + 1 RETURNING`**, mesajla **eyni tranzaksiyada** | Otaq sətri qısa müddət kilidlənir, saniyədə 50 mesaj üçün problem deyil |
 
-## Qəbul meyarları
-- [ ] 100 paralel mesaj göndərildikdə sequence-lər 1..100, boşluqsuz və dublikatsızdır (test).
+**Tövsiyə: sonuncu.** Niyə işləyir? `UPDATE` sətri kilidləyir. İkinci mesaj birincinin bitməsini gözləyir. Tranzaksiya ləğv olsa, nömrə də geri qayıdır, boşluq olmur.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Eyni anda 100 mesaj göndər → nömrələr 1-dən 100-ə qədər, boşluqsuz, dublikatsız (test).

@@ -1,6 +1,6 @@
 # 006 — Docker Compose ilə lokal mühit
 
-**Faza:** 0 · **Asılılıq:** 001 · **Status:** [ ]
+**Faza:** 0 · **Asılılıq:** 001 · **Status:** [x] Həll olunub
 
 ## Məqsəd
 Bir əmrlə (`docker compose up`) Postgres və Redis qalxsın. Hər kəs (və CI) eyni versiyalarla işləsin.

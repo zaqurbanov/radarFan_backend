@@ -1,26 +1,23 @@
 # 117 — Admin: redaksiya qeydləri, hekayələr, mağaza
 
-**Faza:** 10 · **Asılılıq:** 035, 071, 102 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 10 · **Əvvəl bitməli:** 035, 071, 102
 
-## Məqsəd
-Kontent idarəetməsi: matç qeydləri, hekayələr, mağaza kataloqu.
-
-## Niyə
-Sənəd: admin "redaksiya qeydlərini idarə edir". Sayt: hekayələr (071) və mağaza (102) admin kontentidir.
+## Qısaca
+Admin üçün kontent idarəsi.
 
 ## Endpoint-lər
-| Sahə | Endpoint-lər |
+| Nə | Endpoint-lər |
 |---|---|
-| Redaksiya | `PUT /admin/events/{id}/editorial` { note } · `DELETE` |
-| Hekayələr | `GET/POST /admin/stories`, `PUT /admin/stories/{id}`, slaydlar CRUD, `POST .../publish` |
-| Mağaza | `GET/POST /admin/shop/items`, `PUT /admin/shop/items/{id}`, `POST .../retire` |
+| Redaksiya qeydi | `PUT /admin/events/{id}/editorial`, `DELETE` |
+| Hekayələr | `GET/POST /admin/stories`, `PUT /admin/stories/{id}`, slaydlar, dərc et |
+| Mağaza | `GET/POST /admin/shop/items`, `PUT /admin/shop/items/{id}`, söndür |
 
-## Necə edəcəksən
-1. **Qadağa:** admin heç bir yerdə əmsalı (`price`) dəyişə bilməz (sənəd). Admin API-də outcome/market endpoint-i olmamalıdır.
-2. Mağaza qiyməti dəyişəndə əvvəl alınanlar təsirlənmir (103).
-3. Hekayə CTA-ları yalnız icazəli siyahıdan (071).
-4. Bütün admin əməliyyatları audit loga (`admin_audit_log`: actor, action, entity, before, after, at). 069-dakı moderasiya jurnalı ilə birləşdirmək olarmı? Qərar ver.
+## Nə edəcəksən
+1. **Qadağa:** admin API-də əmsal dəyişən **heç bir** endpoint olmasın.
+2. Mağaza qiyməti dəyişəndə əvvəl alınanlar təsirlənmir.
+3. Hekayə düymələri yalnız icazəli siyahıdan (071).
+4. Bütün admin əməliyyatları jurnala: kim, nə etdi, əvvəl, sonra, nə vaxt. Moderasiya jurnalı (069) ilə birləşdirmək olarmı? Qərar ver.
 
-## Qəbul meyarları
-- [ ] Admin API-də əmsal dəyişdirən heç bir endpoint yoxdur.
-- [ ] Hər admin dəyişikliyi auditdə.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Admin API-də əmsal dəyişən endpoint yoxdur.
+- [ ] Hər admin dəyişikliyi jurnaldadır.

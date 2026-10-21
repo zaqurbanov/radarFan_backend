@@ -1,50 +1,35 @@
-# 019 — Sessiyanın yenilənməsi (refresh)
+# 019 — Sessiyanın yenilənməsi
 
-**Faza:** 1 · **Asılılıq:** 013, 014 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 1 · **Əvvəl bitməli:** 013, 014
 
-## Məqsəd
-Access token 15 dəqiqədən sonra bitəndə istifadəçi "çıxmasın". Sessiya təhlükəsiz yollarla yenilənsin.
+## Qısaca
+Access token 15 dəqiqədə bitir. İstifadəçi bundan sonra "çıxmasın", sessiya sakitcə yenilənsin.
 
-## Niyə
-Sənəd (bölmə 6):
-- "Access token yaddaşda saxlanır, müddəti 15 dəqiqədir."
-- "Qorunan HttpOnly Secure cookie ilə yenilənmə yalnız seçilmiş konteynerdə cookie dəstəyi yoxlandıqdan sonra mümkündür; alternativ rejim bridge vasitəsilə yenidən launch token alınmasıdır."
-- "Uzunömürlü tokenlər localStorage-da saxlanmır."
-- "401 zamanı müştəri sessiyanı bir dəfə yeniləyir və təhlükəsiz sorğunu təkrarlayır."
-
-## İki rejim
-| Rejim | Necə işləyir | Nə vaxt |
+## İki yol
+| Yol | Necə işləyir | Nə vaxt |
 |---|---|---|
-| A. Re-exchange | Frontend bridge-dən `getLaunchToken()` ilə **yeni** launch token alır → `/auth/exchange` | Həmişə işləyir, MVP üçün kifayətdir |
-| B. Refresh cookie | `/auth/exchange` əlavə olaraq HttpOnly cookie qoyur → `POST /auth/refresh` | Yalnız WebView üçüncü tərəf cookie-ləri dəstəkləyirsə |
+| **A. Yenidən exchange** | Frontend bukmekerdən **yeni** launch token alır → `/auth/exchange` | Həmişə işləyir. Backend-də heç nə lazım deyil, artıq hazırdır |
+| **B. Refresh cookie** | Exchange zamanı xüsusi cookie qoyulur → `POST /auth/refresh` | Yalnız bukmekerin tətbiqi cookie-ləri dəstəkləyirsə |
 
-**Tövsiyə:** əvvəl A (backend-dən heç nə tələb etmir, artıq hazırdır). B-ni tenant config-də `refresh_mode` ilə açılan imkan kimi et.
+**Tövsiyə:** əvvəl A ilə kifayətlən. B-ni sonra, bukmeker cookie dəstəyini təsdiqləyəndə et.
 
-## Cədvəllər (yalnız B rejimi üçün)
-**`refresh_tokens`**
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| id | uuid PK | |
-| tenant_id, user_id | uuid FK | |
-| token_hash | varchar(64) UNIQUE | token-in özü yox, SHA-256 hash-i |
-| family_id | uuid | rotasiya zənciri |
-| expires_at | timestamptz | |
-| revoked_at | timestamptz NULL | |
-| replaced_by | uuid NULL | |
-| created_at | timestamptz | |
+## B yolu üçün (sonra lazım olsa)
+### Cədvəl: `refresh_tokens`
+| Sütun | İzah |
+|---|---|
+| id, tenant_id, user_id | |
+| token_hash | token-in özü yox, **hash-i** |
+| family_id | eyni zəncirin token-ləri |
+| expires_at, revoked_at | |
 
-## Necə edəcəksən (B üçün)
-1. "Refresh token rotation" öyrən: hər refresh zamanı köhnə token ləğv olunur, yenisi verilir. Köhnə token təkrar istifadə olunsa, **bütün ailə** ləğv olunur (oğurlanma əlaməti).
-2. Cookie: `HttpOnly`, `Secure`, `SameSite=None` (iframe/WebView üçün lazımdır, amma CSRF riski var, araşdır), `Path=/api/v1/auth`.
-3. `@fastify/cookie` qoşulmalıdır.
+### Qaydalar
+- Hər yeniləmədə köhnə token ləğv olunur, yenisi verilir ("rotation").
+- Köhnə token ikinci dəfə istifadə olunsa → oğurlanma əlamətidir → **bütün zəncir** ləğv olunur.
+- Cookie: `HttpOnly`, `Secure`.
 
-## Tələlər
-- DB-də refresh token-in özünü saxlama, yalnız hash.
-- iOS WKWebView və Android WebView-da üçüncü tərəf cookie davranışı fərqlidir. Ona görə sənəd "yoxlandıqdan sonra" deyir.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] A yolu: köhnə launch token bitib, yenisi ilə exchange işləyir.
+- [ ] (B edilibsə) köhnə refresh token ikinci dəfə istifadə olunanda bütün sessiyalar ləğv olunur.
 
-## Qəbul meyarları
-- [ ] Rejim A: launch token bitib, yenisi ilə exchange işləyir.
-- [ ] Rejim B (açıqdırsa): köhnə refresh token ikinci dəfə istifadə olunanda bütün sessiyalar ləğv olunur.
-
-## Açıq suallar
-- Tərəfdaşın konteyneri cookie dəstəkləyirmi? (Tərəfdaşdan gələcək məlumat, bölmə 11.)
+## Açıq sual
+Bukmekerin tətbiqi cookie-ləri dəstəkləyirmi? (Bukmekerdən gələcək cavab.)

@@ -1,32 +1,29 @@
-# 041 — Kanallar və abunəlik hüquqları
+# 041 — Kanallar və kim hansına qoşula bilər
 
-**Faza:** 3 · **Asılılıq:** 040 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 3 · **Əvvəl bitməli:** 040
 
-## Məqsəd
-Müştəri kanallara abunə olsun, server hər abunədə hüququ yoxlasın.
+## Qısaca
+Frontend kanallara abunə olsun. Server **hər abunədə** icazəni yoxlasın.
 
-## Niyə
-Sənəd (bölmə 9): "Kanallar: event:{id}, room:{id}, battle:{id}, user:{id}. Hüquqlar hər subscribe zamanı yoxlanılır; müştəri başqa istifadəçinin user və ya battle kanalına abunə olmur."
+## Kanallar və qaydalar
+| Kanal | Nə üçün | Kim abunə ola bilər |
+|---|---|---|
+| `event:{id}` | matç səhifəsi | matç bu tenant-dadırsa |
+| `room:{id}` | çat otağı | otaq bu tenant-dadırsa |
+| `battle:{id}` | duel | yalnız duel iştirakçısı |
+| `user:{id}` | şəxsi bildirişlər (XP, tapşırıq) | yalnız **özü** |
+| `feed:{tenant}` | lent kartlarının yenilənməsi | bu tenant-ın istifadəçiləri |
 
-Bölmə 6: "Oxuma, dəyişmə, WebSocket subscriptions, keş və fon tapşırıqları tenant-ı və hüquqları yoxlayır."
+## Niyə lazımdır?
+Yoxlama olmasa, istənilən istifadəçi `user:başqasının_id` kanalına abunə olub onun bildirişlərini oxuya bilər.
 
-## Hüquq qaydaları
-| Kanal | Kim abunə ola bilər |
-|---|---|
-| `event:{id}` | event bu tenant-dadırsa |
-| `room:{id}` | otaq bu tenant-dadırsa (+ ban yoxdursa) |
-| `battle:{id}` | yalnız battle iştirakçısı |
-| `user:{id}` | yalnız `id === özü`. Bəlkə `user:me` kimi alias? |
-| `lobby` / `feed` (əlavə) | lent kartlarının ümumi yenilənməsi, tenant üzrə |
+## Nə edəcəksən
+1. Hər kanal tipi üçün `icazə_var_mı(istifadəçi, kanal)` funksiyası.
+2. Bir bağlantıda maksimum abunə sayı (məs. 50).
+3. Lent üçün: hər kart üçün ayrı kanal bahadır (20 kart = 20 kanal). Lent üçün bir `feed:` kanalı, matç səhifəsi üçün `event:` kanalı istifadə et.
+4. Uğurlu abunədə `ack` + kanalın cari sıra nömrəsi (task 048 üçün).
 
-**Kanal adlarında tenant:** `room:{id}` qlobal unikal UUID-dir, amma daxili yayım açarı (Redis pub/sub, 044) `t:{tenant}:room:{id}` olmalıdır. Niyə? Tenant izolyasiyasını iki qat qorumaq.
-
-## Necə edəcəksən
-1. Hər kanal tipi üçün `authorize(user, channelId)` funksiyası. Registry pattern.
-2. Bir bağlantıda maksimum abunə sayı (məs. 50). Lentdə 20 kart = 20 `event:` kanalı? Yoxsa bir `feed` kanalı? Fikirləş: hər kartın ayrı kanalı bahadır; `feed:{tenant}` kanalı isə hamıya bütün dəyişiklikləri göndərir. Hibrid: lent üçün feed kanalı, Центр матча üçün event kanalı.
-3. Abunə uğurlu → `ack` + kanalın cari `sequence`-i (resync üçün, 048).
-
-## Qəbul meyarları
-- [ ] Başqa istifadəçinin `user:{id}` kanalına abunə → `error` ACCESS_DENIED.
-- [ ] Başqa tenant-ın otağına abunə → `error` NOT_FOUND.
-- [ ] Hər hüquq qaydası üçün test.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Başqasının `user:` kanalına abunə → `error`.
+- [ ] Başqa tenant-ın otağına abunə → `error`.
+- [ ] Hər qayda üçün test.

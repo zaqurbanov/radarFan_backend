@@ -1,3 +1,4 @@
+name: radarfan-test
 services:
   postgres_test:
     image: postgres:15-alpine

@@ -1,32 +1,29 @@
-# 103 — İnventar (qarderob)
+# 103 — Qarderob (alınmış əşyalar)
 
-**Faza:** 8 · **Asılılıq:** 102 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 8 · **Əvvəl bitməli:** 102
 
-## Məqsəd
+## Qısaca
 İstifadəçinin sahib olduğu əşyalar.
 
-## Niyə
-Sayt: "Гардероб · 4" (4 default əşya), alışdan sonra "В твоём гардеробе". "0 новых предметов": yeni (baxılmamış) əşya sayğacı.
+## Saytda
+"Гардероб · 4" (4 pulsuz əşya), alışdan sonra "В твоём гардеробе", "0 новых предметов".
 
-## Cədvəl
-**`user_items`**
-| Sütun | Tip |
+## Yeni cədvəl: `user_items`
+| Sütun | İzah |
 |---|---|
-| tenant_id | uuid |
-| user_id | uuid FK |
-| item_id | uuid FK → shop_items |
-| acquired_via | enum(`default`, `purchase`, `reward`, `admin`) |
-| price_paid | int |
-| coin_ledger_id | uuid NULL (alışın ledger qeydi) |
-| seen_at | timestamptz NULL ("yeni" sayğacı üçün) |
-| acquired_at | timestamptz |
+| tenant_id, user_id, item_id | |
+| acquired_via | `default` / `purchase` / `reward` / `admin` |
+| price_paid | ödənilən qiymət |
+| coin_ledger_id | alışın jurnal sətri |
+| seen_at | baxılıb? ("yeni əşya" sayğacı üçün) |
+| acquired_at | |
 
-PK (`user_id`, `item_id`). Eyni əşyanı iki dəfə almaq mümkün deyil.
+Əsas açar (`user_id`, `item_id`): eyni əşyanı iki dəfə almaq olmaz.
 
-## Necə edəcəksən
-1. Default əşyalar: istifadəçi yaradılanda inventara əlavə et (087 ilə eyni yer) **və ya** "default əşyalar həmişə sahiblənmiş sayılır" (inventarda saxlama). İkincisi daha sadədir, amma yeni default əlavə olunanda avtomatik işləyir. Qərar ver.
-2. `GET /me/wardrobe` → slot üzrə sahib olunan əşyalar.
-3. "Yeni" sayğacı: `seen_at IS NULL` sayı. `POST /me/wardrobe/seen` hamısını görülmüş edir.
+## Nə edəcəksən
+1. Pulsuz əşyalar: istifadəçi yarananda qarderoba əlavə et, **və ya** "pulsuz əşyalar həmişə var" say (qarderobda saxlama). İkincisi sadədir və yeni pulsuz əşya əlavə olunanda avtomatik işləyir. Qərar ver.
+2. `GET /me/wardrobe` → kateqoriya üzrə əşyalar.
+3. "Yeni" sayğacı: `seen_at` boş olanlar. `POST /me/wardrobe/seen` hamısını "baxılıb" edir.
 
-## Qəbul meyarları
-- [ ] Yeni istifadəçinin qarderobunda 4 default əşya var.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Yeni istifadəçinin qarderobunda 4 pulsuz əşya var.

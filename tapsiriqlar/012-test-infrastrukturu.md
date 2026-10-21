@@ -1,29 +1,39 @@
-# 012 — Test infrastrukturu
+# 012 — Avtomatik testlər üçün hazırlıq
 
-**Faza:** 0 · **Asılılıq:** 006, 007 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 0 · **Əvvəl bitməli:** 006, 007
 
-## Məqsəd
-Avtomatik testlər yazmaq üçün baza hazır olsun: test DB, test Redis, app-i şəbəkəsiz test etmək.
+## Qısaca
+Avtomatik test yazmaq üçün baza qur: test runner, test bazası, köməkçi funksiyalar.
 
-## Niyə
-- Sənəd (bölmə 11, təhvil): "kritik ssenarilərin avtomatik yoxlamaları". Qəbul meyarlarının çoxu (iki paralel claim bir ledger qeydi yaradır, eyni `client_message_id` dublikat yaratmır) **yalnız** testlə etibarlı yoxlanır.
-- Bundan sonrakı hər task-ın qəbul meyarlarını test kimi yazmağı tövsiyə edirəm.
+## Niyə lazımdır?
+- Sonrakı task-ların çoxunun yoxlaması belədir: "eyni anda 10 sorğu gəlsə, XP bir dəfə verilsin". Bunu əl ilə yoxlamaq **mümkün deyil**, yalnız testlə olur.
+- Sənəd (bölmə 11) avtomatik testləri təhvil şərti kimi tələb edir.
+- Bu task-dan sonra hər yeni task-ın yoxlamasını test kimi yazmağı tövsiyə edirəm.
 
-## Necə edəcəksən
-1. Runner seç: `vitest` (ESM və TS ilə problemsiz) tövsiyə olunur.
-2. `buildApp()` artıq ayrıca funksiyadır, bu yaxşıdır. Testdə `app.inject()` ilə HTTP sorğusu göndər, port açmadan.
-3. Test DB: hər test faylından əvvəl migration, hər testdən əvvəl cədvəlləri təmizlə (`TRUNCATE ... CASCADE`) və ya hər testi tranzaksiyada işlət və rollback et. Fərqlərini araşdır.
-4. Redis: ayrıca DB nömrəsi (`/1`) və ya test zamanı `FLUSHDB`.
-5. Helper-lər: `createTenant()`, `createUser()`, `loginAs(user)` (access token qaytarır). Bunlar bütün sonrakı testlərdə lazım olacaq.
-6. `db` və `redis` hazırda modul səviyyəsində singleton-dur. Test üçün başqa URL-ə qoşulmaları necə təmin edəcəksən? (Task 001-dəki env modulu.)
-7. İlk testlər: `/health`, `/auth/exchange` (uğur, təkrar nonce, etibarsız token), `/events` tenant izolyasiyası.
+## Artıq hazır olanlar
+- Test Postgres konteyneri (`docker-compose.test.yml`, port 5433).
+- `.env.test` faylı (Redis: dev Redis-in 1 nömrəli bazası).
 
-## Öyrən
-- Vitest: `beforeAll`, `beforeEach`, `globalSetup`
-- Fastify `inject`
-- Test piramidası: unit və integration
+## Nə edəcəksən
+1. **Runner seç:** `vitest` tövsiyə olunur (TypeScript və ESM ilə problemsiz işləyir).
+2. **Server qaldırmadan test:** `buildApp()` artıq ayrıca funksiyadır, bu yaxşıdır. Testdə `app.inject()` ilə sorğu göndər. Port açmaq lazım deyil.
+3. **Test bazası:**
+   - testlərdən əvvəl migration işləsin;
+   - hər testdən əvvəl cədvəllər təmizlənsin (`TRUNCATE ... CASCADE`).
+4. **Testlər `.env.test`-i oxusun**, `.env`-i yox. Yoxsa testlər sənin dev bazanı siləcək!
+5. **Köməkçi funksiyalar** yaz (bütün gələcək testlərdə lazım olacaq):
+   - `createTenant()`
+   - `createUser()`
+   - `loginAs(user)` → access token qaytarır
+6. **İlk testlər:**
+   - `/health` işləyir;
+   - `/auth/exchange`: uğurlu, eyni token ikinci dəfə, səhv token;
+   - `/events`: A tenant-ı B tenant-ın matçlarını görmür.
 
-## Qəbul meyarları
-- [ ] `npm test` lokal DB-ni deyil, test DB-ni istifadə edir.
+## Diqqət
+`db` və `redis` faylları modul yüklənəndə dərhal qoşulur. Test zamanı onların `.env.test`-dəki ünvana qoşulmasını necə təmin edəcəksən? Düşün.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] `npm test` dev bazaya **toxunmur** (test zamanı dev bazada sətir sayı dəyişmir).
 - [ ] Ən azı 5 test keçir.
-- [ ] Testlər iki dəfə ardıcıl işlədiləndə də keçir (məlumat qalmır).
+- [ ] Testləri iki dəfə ardıcıl işlədəndə yenə keçir.

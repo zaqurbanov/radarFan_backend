@@ -1,31 +1,37 @@
-# 023 — `GET /me`: tam profil cavabı
+# 023 — `GET /me`: profilin tam cavabı
 
-**Faza:** 1 · **Asılılıq:** 016, 021, 022 · (XP/coin hissəsi 083–095-dən sonra tamamlanır) · **Status:** [ ]
+**Status:** [ ] · **Faza:** 1 · **Əvvəl bitməli:** 016, 021, 022
+(XP və coin hissələri 083–095 bitəndə tamamlanır.)
 
-## Məqsəd
-Frontend başlıq, profil və "Мой фан" ekranları üçün lazım olan hər şeyi bir sorğu ilə alsın.
+## Qısaca
+Frontend başlıq və profil üçün lazım olan hər şeyi **bir sorğu** ilə alsın.
 
-## Niyə
-- Sənəd (bölmə 8): `GET /me` → `user, xp_balance, challenge_summary`.
-- Sayt: başlıqda **XP** (məs. "150 XP") və avatar baş hərfi "N". "Мой фан"-da **coin balansı** (◈ 360), səviyyə adı ("Начинающий фанат", "Новичок на радаре"), "N новых предметов". Profildə "2 завершённых игр · 0 избранных матчей".
+## Saytda nə görünür
+- Başlıqda: XP ("150 XP") və adın baş hərfi ("N").
+- "Мой фан"-da: coin balansı (◈ 360), səviyyə adı ("Начинающий фанат").
+- Profildə: "2 завершённых игр · 0 избранных матчей".
 
-## Cavab strukturu (hədəf)
-- `user`: id, nickname, initials, role, status
-- `tenant`: public config (021)
-- `entitlements` (022)
-- `xp_balance` (task 084)
-- `coin_balance` (task 086)
-- `level`: { code, title, next_threshold } (task 094)
-- `challenge_summary`: { completed_tasks, total_tasks: 3, status } (task 090)
-- `counters`: { completed_games, favorites, new_items } (task 095, 106)
+## Cavabda nə olacaq
+| Sahə | Haradan | Hazır olacaq |
+|---|---|---|
+| `user` (id, ad, baş hərflər, rol, status) | users | indi |
+| `tenant` (açıq config) | 021 | indi |
+| `entitlements` | 022 | indi |
+| `xp_balance` | 084 | sonra |
+| `coin_balance` | 086 | sonra |
+| `level` | 094 | sonra |
+| `challenge_summary` | 090 | sonra |
+| `counters` (oyunlar, seçilmişlər, yeni əşyalar) | 095, 103 | sonra |
 
-**Qeyd:** `external_user_id` heç vaxt qaytarılmır. Sənəd: "Ləqəb email, telefon və tərəfdaş hesabının identifikatorunu açıqlamır."
+## Nə edəcəksən
+1. Hazır olanları indi əlavə et, qalanlarını sonra.
+2. Hələ hazır olmayan sahələr üçün qərar ver: `0` göstər, yoxsa `null`? (`null` daha dürüstdür: "hələ bilmirik".)
+3. Ayrı sorğuları `Promise.all` ilə paralel işlət.
+4. Cavab sxemi yaz ki, artıq sahə çölə çıxmasın.
 
-## Necə edəcəksən
-1. İndi mövcud sahələrlə başla, digərləri hazır olduqca əlavə et. Hardcode `xp_balance: 0` əvəzinə `null` + "hələ yoxdur" daha dürüstdür, yoxsa 0? Qərar ver.
-2. Çoxlu ayrı sorğu olacaq. `Promise.all` ilə paralel et.
-3. Response sxemi yaz (010) ki, artıq sahə sızmasın.
+## Diqqət
+`external_user_id` (bukmekerdəki ID) **heç vaxt** cavaba düşməməlidir.
 
-## Qəbul meyarları
+## Hazır olduğunu necə yoxlayarsan
 - [ ] Cavabda `external_user_id` yoxdur.
-- [ ] Bütün balanslar hazır olandan sonra saytdakı başlıq və profil məlumatları bir sorğu ilə doldurulur.
+- [ ] (Hamısı hazır olanda) saytın başlığı və profili bir sorğu ilə dolur.

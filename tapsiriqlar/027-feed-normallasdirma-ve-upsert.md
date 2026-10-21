@@ -1,42 +1,42 @@
-# 027 — Feed normallaşdırma və DB-yə yazılma (upsert)
+# 027 — Matç məlumatını bazaya düzgün yazmaq
 
-**Faza:** 2 · **Asılılıq:** 025, 026 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 025, 026
 
-## Məqsəd
-Provayderdən gələn məlumatı bizim cədvəllərə dublikatsız, köhnə məlumatla yenisini əvəz etmədən yazmaq.
+## Qısaca
+Mənbədən gələn məlumatı bazaya **dublikatsız** yaz. **Köhnə** məlumat **yenisinin** üstünə yazılmasın.
 
-## Niyə
-- Sənəd (bölmə 9): "Daha kiçik version-lu hadisə daha yeni məlumatı əvəz etmir."
-- Bölmə 7: Event `(tenant, provider_id)` unikal; Outcome "qiymətin versiyası məlumat axınından gəlir".
-- Şəbəkədə mesajlar gecikir, sıra qarışır. Köhnə əmsal yenisinin üstünə yazılsa, istifadəçi səhv qiymətlə kupona keçir.
+## Niyə lazımdır?
+- Şəbəkədə mesajlar gecikir və qarışıq sıra ilə gəlir. Əmsal `4.20 → 3.80` dəyişdi, amma köhnə `4.20` mesajı sonra gəldi. Bazada `4.20` qalsa, istifadəçi səhv qiymətlə bukmekerə keçir.
+- Sənəd: "Daha kiçik versiyalı məlumat daha yenisini əvəz etmir."
+
+## Upsert nədir?
+"Yoxdursa əlavə et, varsa yenilə", bir əmrdə. Postgres-də `INSERT ... ON CONFLICT ... DO UPDATE`.
 
 ## Cədvəl dəyişiklikləri
-**events** (mövcud) + əlavə sütunlar:
-| Sütun | Tip | Qeyd |
-|---|---|---|
-| version | int NOT NULL default 1 | provayder versiyası və ya bizim sayğac |
-| provider_updated_at | timestamptz | provayderin vaxtı |
-| finished_at | timestamptz NULL | otağın read_only olması üçün (task 057) |
-| is_demo | boolean NOT NULL default false | demo etiketi |
-| home_short, away_short | varchar(5) | saytdakı "RM", "FCB" loqo yerinə |
+**events**-ə əlavə:
+| Sütun | İzah |
+|---|---|
+| version | versiya sayğacı |
+| finished_at | matçın bitmə vaxtı (çatın bağlanması üçün) |
+| is_demo | demo işarəsi |
+| home_short, away_short | qısa adlar: "RM", "FCB" |
 
-`teams jsonb` əvəzinə `home_name`, `away_name`, `home_short`, `away_short` sütunları daha yaxşıdır? Sorğu və index üçün düşün. Loqo URL-ləri də lazım ola bilər.
+**markets**: unique (`event_id`, `provider_id`) əlavə et. **İndi yoxdur!**
 
-**markets**: `(event_id, provider_id)` UNIQUE əlavə et (indi yoxdur!). `updated_at` əlavə et.
+**outcomes**:
+- unique (`market_id`, `provider_id`) və unique (`market_id`, `key`);
+- `version` sütunu;
+- `price` sütunu: `varchar` əvəzinə `numeric(10,3)`. API-də yenə `"1.72"` string kimi qaytar. Hesablamalar (ROI, ekspres əmsal) üçün DB-də rəqəm lazımdır. **Float heç vaxt istifadə etmə**, pul/əmsal üçün dəqiq deyil.
 
-**outcomes**: `(market_id, provider_id)` UNIQUE, `(market_id, key)` UNIQUE, `version int`. `price` decimal string kimi saxlanır. `varchar` yoxsa `numeric(10,3)`? Sənəd: "Əmsal decimal string kimi ötürülür". DB-də `numeric` saxlayıb API-də string qaytarmaq daha düzgündür (hesablamalar, ROI, ekspres əmsal, task 100/107). **Float heç vaxt istifadə etmə.**
+## Nə edəcəksən
+1. Upsert yaz, şərtlə: **yalnız yeni versiya köhnədən böyükdürsə** yenilə (`WHERE version < yeni_version`).
+2. Matç + bazarlar + nəticələr **bir tranzaksiyada** yazılsın.
+3. Bazar mənbədə yoxa çıxsa, **silmə**, `closed` et. Proqnozlar və tarixçə ona istinad edir.
 
-## Necə edəcəksən
-1. Upsert: `INSERT ... ON CONFLICT (tenant_id, provider_id) DO UPDATE ... WHERE events.version < EXCLUDED.version`. Bu `WHERE` şərti köhnə məlumatın yenini əvəz etməsinin qarşısını alır.
-2. Event + market-lər + outcome-lar **bir tranzaksiyada** yazılır.
-3. Dəyişiklik olubsa, real-time yayım üçün outbox-a hadisə yaz (task 045/047). Upsert dəyişiklik edib-etmədiyini necə biləcəksən? (`RETURNING` + `xmax` hiyləsi və ya versiyaları müqayisə.)
-4. Bir feed çox tenant-a xidmət edə bilər (eyni provayder, iki bukmeker). Feed-i tenant başına ayrıca yazırıq, çünki sənəddə hər cədvəldə `tenant_id` var və əmsallar bukmekerə görə fərqlidir.
+## Diqqət
+`ON CONFLICT` işləmək üçün həmin sütunlarda **unique constraint mütləq olmalıdır**, yoxsa Postgres xəta verir.
 
-## Tələlər
-- `ON CONFLICT` üçün unique constraint **mütləq** lazımdır, yoxsa Postgres xəta verir.
-- Market silinməsi: provayder market-i göndərməyi dayandırsa, onu silmə, `closed` et (tarixçə, proqnozlar və handoff ona istinad edir).
-
-## Qəbul meyarları
-- [ ] Eyni event iki dəfə gəlsə, bir sətir qalır.
-- [ ] `version=5` yazılandan sonra `version=4` gəlsə, dəyişiklik olmur (test).
-- [ ] Qiymətlər `numeric`-də saxlanır, API-də `"1.72"` kimi qayıdır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Eyni matç iki dəfə gəlsə, bazada bir sətir qalır.
+- [ ] `version=5` yazılandan sonra `version=4` gəlsə, heç nə dəyişmir (test).
+- [ ] Qiymət bazada rəqəmdir, API-də `"1.72"` kimi gəlir.

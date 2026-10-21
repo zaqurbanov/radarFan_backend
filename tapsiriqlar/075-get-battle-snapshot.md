@@ -1,30 +1,30 @@
-# 075 — `GET /battles/{id}`: snapshot və bərpa
+# 075 — Duelin vəziyyəti: `GET /battles/{id}`
 
-**Faza:** 5 · **Asılılıq:** 074 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 5 · **Əvvəl bitməli:** 074
 
-## Məqsəd
-Reload və ya reconnect-dən sonra battle tam bərpa olunsun.
-
-## Niyə
-Sənəd (bölmə 5): "Vəziyyət serverdə saxlanır və yenidən yüklənəndə bərpa edilir." Bölmə 8: → "cari snapshot və hazırdırsa nəticə".
+## Qısaca
+Səhifə yeniləndikdə duel **olduğu yerdən** davam etsin.
 
 ## Cavab
-- `battle_id`, `state`, `mode`, `opponent` { name: "Alex", is_bot: true }
-- `progress`: { index: 1, total: 3 } (sayt: "1 / 3")
-- `scores`: { user, bot }
-- `current_question`: sual mətni + options (+ cavab verilibsə: `my_answer`, `correct_option_id`, `explanation`)
-- `question_state`: open / closed
-- `deadline_at`, `next_auto_at` (075/077)
-- `result`, `awarded_xp`, `awarded_coins` (completed-dirsə)
-- `server_time`
+- duel ID, vəziyyət, rəqib (Alex, bot)
+- irəliləyiş: "1 / 3"
+- xallar: sən və bot
+- cari sual (mətn, variantlar)
+  - cavab vermisənsə: sənin cavabın + düzgün cavab + izah
+- sualın vəziyyəti (açıq/bağlı), deadline
+- bitibsə: nəticə, verilən XP və coin
+- server vaxtı
 
-## Necə edəcəksən
-1. Yalnız battle sahibi görə bilər (başqası → 404).
-2. **Lazy evaluation:** snapshot oxunanda deadline keçibsə, sualı "bağlanmış" kimi göstər (və ya keçidi burada et, 078).
-3. Bağlanmamış sual üçün düzgün cavab sızmasın. Sənəd: "Raund bitənədək correct_option_id, izah və gələcək suallar göndərilmir". Gələcək suallar da!
-4. Müştəri bu cavabdan bütün ekranı qura bilməlidir: başqa sorğu lazım olmamalıdır.
+## Nə edəcəksən
+1. Yalnız duelin sahibi görə bilər (başqası → 404).
+2. Deadline keçibsə, sualı "bağlı" kimi göstər.
+3. Frontend bu cavabdan **bütün ekranı** qura bilməlidir, başqa sorğu lazım olmamalıdır.
 
-## Qəbul meyarları
-- [ ] Açıq sual zamanı snapshot-da `correct_option_id` yoxdur.
-- [ ] Cavab veriləndən sonra snapshot `correct_option_id` + `explanation` göstərir.
+## Diqqət
+- **Açıq** sual üçün düzgün cavab yoxdur.
+- **Gələcək** suallar heç vaxt görünmür.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Açıq sualda `correct_option_id` yoxdur.
+- [ ] Cavabdan sonra düzgün cavab və izah görünür.
 - [ ] Gələcək suallar heç vaxt görünmür.

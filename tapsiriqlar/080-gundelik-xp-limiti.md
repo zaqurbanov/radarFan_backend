@@ -1,26 +1,26 @@
-# 080 — Gündəlik XP limiti (tenant timezone)
+# 080 — Gündə yalnız 3 duel XP verir
 
-**Faza:** 5 · **Asılılıq:** 073, 021 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 5 · **Əvvəl bitməli:** 073, 021
 
-## Məqsəd
-Sutkada yalnız ilk 3 tamamlanmış duel XP (və coin) versin.
+## Qısaca
+Gündə ilk 3 tamamlanmış duel XP (və coin) versin. 4-cü və sonrakılar oynanılır, amma mükafatsız.
 
-## Niyə
-- Sənəd (bölmə 5): "MVP-də XP tenant timezone-na əsasən sutka ərzində tamamlanmış ilk 3 duel üçün verilir. Təkrar oyunlar XP olmadan mümkündür; startdan əvvəl «Bu gün XP limitinə çatmısan» göstərilir. Timezone versiyası və günün açarı battle daxilində start zamanı sabitlənir."
-- Bölmə 11: "Sutkanın dördüncü dueli XP vermir."
-- Sayt: "XP начисляются за первые 3 баттла в этом демо." Sayt "bu demoda" deyir (ümumilikdə 3), sənəd isə "sutkada 3". **Sənəd qaydası daha dəqiqdir**, sayt mətni demo üçün sadələşdirilib. Hər iki variant `rules.xp_battles_period: "day" | "lifetime"` ilə dəstəklənə bilər. Məhsul sahibinə soruş.
+## Saytla fərq
+- **Sənəd:** gündə ilk 3.
+- **Sayt:** "XP начисляются за первые 3 баттла **в этом демо**" (ümumilikdə 3).
+Hər ikisini dəstəklə: `rules.xp_battles_period: "day"` və ya `"lifetime"`. Məhsul sahibinə soruş.
 
-## İncəliklər
-1. **"Sutka" kimin saatı ilə?** Tenant timezone-u (`Asia/Baku`, `Europe/Moscow`). UTC yox, istifadəçinin telefonu yox. `daily_key` = start anında tenant timezone-undakı tarix (`2026-10-19`).
-2. **Başlanğıc vs tamamlanma:** Sənəd: "tamamlanmış ilk 3 duel", amma "günün açarı start zamanı sabitlənir". 23:59-da başlayıb 00:01-də bitən duel start gününə aiddir.
-3. **Paralel start:** limit 3, sayılan 2. İki paralel battle başlayır, ikisi də "eligible" olur? Bir aktiv battle qaydası (073) bunu bloklayır. Amma hesablamanı yenə də tranzaksiya daxilində et.
-4. **Sayma:** `count(*) FROM battles WHERE user, daily_key, state = completed, xp_eligible`. Start zamanı hesablanan `xp_eligible` + tamamlanma zamanı yenidən yoxlama. Niyə hər ikisi? (Start zamanı istifadəçiyə xəbərdarlıq üçün; tamamlanma zamanı həqiqi qərar üçün.)
-5. Abandoned battle-lar sayılmır.
+## İncə məqamlar
+1. **"Gün" kimin saatı ilə?** Bukmekerin saat qurşağı ilə (`Asia/Baku`). Server UTC-si yox, istifadəçinin telefonu yox.
+2. **Gün nə vaxt təyin olunur?** Duel **başlayanda**. 23:59-da başlayıb 00:01-də bitən duel əvvəlki günə aiddir.
+3. **Necə sayılır:** həmin gün üçün `completed` + `xp_eligible` duellərin sayı.
+4. Başlayanda hesabla (istifadəçiyə "bu gün limit doldu" göstərmək üçün) **və** bitəndə yenidən yoxla (son qərar).
+5. Tərk edilmiş duellər sayılmır.
 
-## Lazım olan
-- Timezone hesablama: `Intl.DateTimeFormat` və ya `date-fns-tz` / `Temporal` ilə. Postgres-də: `(now() AT TIME ZONE 'Asia/Baku')::date`.
-- `GET /battles/intro` (074): `xp_battles_left_today`.
+## Nə edəcəksən
+1. Saat qurşağına görə tarixi hesablamaq: Postgres-də `(now() AT TIME ZONE 'Asia/Baku')::date` və ya JS-də `Intl`/`date-fns-tz`.
+2. `GET /battles/intro`-da "bu gün neçə XP-li duel qalıb".
 
-## Qəbul meyarları
-- [ ] 4-cü tamamlanmış duel XP vermir, amma oynanılır.
-- [ ] Tenant timezone-una görə gün dəyişəndə limit sıfırlanır (test: tenant `Asia/Baku`, UTC 20:30 = Bakı 00:30).
+## Hazır olduğunu necə yoxlayarsan
+- [ ] 4-cü duel XP vermir, amma oynanılır.
+- [ ] Bakı vaxtı ilə gün dəyişəndə limit sıfırlanır (test: UTC 20:30 = Bakı 00:30).

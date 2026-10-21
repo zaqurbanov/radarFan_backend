@@ -1,35 +1,36 @@
-# 037 — Seçilmişlər: `PUT/DELETE /favorites/{event_id}`
+# 037 — Seçilmişlər: əlavə et və sil
 
-**Faza:** 2 · **Asılılıq:** 033 · **Status:** [ ]
-(Köhnə `TASKS.md`: T16)
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 033
 
-## Məqsəd
+## Qısaca
 İstifadəçi matçı seçilmişlərə əlavə edə və silə bilsin.
 
-## Niyə
-- Sənəd (bölmə 3, Seçilmişlər): "Saxlama və silmə idempotentdir. UI optimistik yenilənə bilər, lakin xəta zamanı dəyişiklik geri qaytarılır. İlk təsdiqlənmiş saxlama save_match tapşırığını tamamlayır. Seçilmişlərdən silmə tapşırığın tamamlanmasını ləğv etmir."
-- Sayt: kartda "♡ Сохранить", filtr "Избранное", profildə "Мои избранные", "0 избранных матчей".
-- `favorites` cədvəli artıq var. PK (`tenant_id`, `user_id`, `event_id`), bu yaxşıdır.
+## Saytda
+Kartda "♡ Сохранить", filtr "Избранное", profildə "Мои избранные".
 
 ## Endpoint-lər
 | Metod | Yol | Cavab |
 |---|---|---|
-| PUT | /favorites/{event_id} | `{ saved: true, challenge_progress? }` |
+| PUT | /favorites/{event_id} | `{ saved: true }` |
 | DELETE | /favorites/{event_id} | `{ saved: false }` |
-| GET | /favorites | profil üçün siyahı (cursor) |
+| GET | /favorites | profil üçün siyahı |
 
-**Niyə PUT/DELETE, POST deyil?** PUT və DELETE HTTP-də təbiətən idempotentdir. Təkrar PUT eyni vəziyyəti yaradır. Burada Idempotency-Key lazım deyil.
+**Niyə PUT/DELETE, POST deyil?** PUT və DELETE təbiətən **idempotentdir**: 5 dəfə göndərsən də nəticə eynidir. Burada Idempotency-Key lazım deyil.
 
-## Necə edəcəksən
-1. PUT: `INSERT ... ON CONFLICT DO NOTHING`. Təkrar xəta vermir.
-2. Event bu tenant-a aid deyilsə → 404.
-3. DELETE: mövcud deyilsə də 200 `saved: false` (idempotent).
-4. `save_match` tapşırığı: **ilk** uğurlu saxlamada (task 091). Insert həqiqətən baş verdisə, bunu necə biləcəksən? (`RETURNING`.) Amma diqqət: sil + yenidən saxla = yenidən "ilk" deyil, çünki tapşırıq artıq tamamlanıb. Tapşırıq məntiqi bunu öz tərəfində idarə edir.
-5. Bitmiş matçı seçilmişlərə əlavə etmək olarmı? Qərar ver.
-6. Analitika: `match_saved` (task 119).
+## Qaydalar (sənəddən)
+- Təkrar əlavə və təkrar silmə **xəta vermir**.
+- **İlk** əlavə "save_match" tapşırığını tamamlayır (task 091).
+- Silmək tapşırığı **geri qaytarmır**.
 
-## Qəbul meyarları
-- [ ] PUT iki dəfə → bir sətir, iki dəfə 200.
-- [ ] DELETE mövcud olmayana → 200.
-- [ ] Başqa tenant-ın event-i → 404.
+## Nə edəcəksən
+1. PUT: `INSERT ... ON CONFLICT DO NOTHING`.
+2. DELETE: yoxdursa da 200 qaytar.
+3. Matç bu tenant-ın deyilsə → 404.
+4. Əlavənin **həqiqətən** baş verdiyini bilmək üçün `RETURNING` istifadə et (tapşırıq üçün lazım olacaq).
+5. Fikirləş: bitmiş matçı seçilmişlərə əlavə etmək olarmı?
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] PUT iki dəfə → bazada bir sətir, iki dəfə 200.
+- [ ] Olmayan seçilmişi DELETE → 200.
+- [ ] Başqa tenant-ın matçı → 404.
 - [ ] `/events?favorites=true` yalnız seçilmişləri qaytarır.

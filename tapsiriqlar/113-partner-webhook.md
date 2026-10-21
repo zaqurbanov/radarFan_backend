@@ -1,38 +1,36 @@
-# 113 — Tərəfdaş webhook-u
+# 113 — Bukmekerdən gələn bildirişlər (webhook)
 
-**Faza:** 9 · **Asılılıq:** 112 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 9 · **Əvvəl bitməli:** 112
 
-## Məqsəd
-Tərəfdaş sonrakı əməliyyatlar barədə (kupon açıldı, mərc qoyuldu) imzalı bildiriş göndərə bilsin.
+## Qısaca
+Bukmeker sonrakı hadisələr (kupon açıldı, mərc qoyuldu) haqqında **imzalı** bildiriş göndərə bilsin.
 
-## Niyə
-Sənəd (bölmə 9): "Sonrakı əməliyyatları təsdiqləmək üçün tərəfdaş event_id, correlation_id, event_type və occurred_at ilə imzalanmış webhook events göndərə bilər. RADAR.FAN imzanı, timestamp-i və təkrar event_id-ni yoxlayır. Belə inteqrasiya olmadan analitika təsdiqlənmiş kupon açılışı ilə bitir."
+## Niyə lazımdır?
+Məhsulun əsas sualı: "icma bukmekerə daha çox keçid gətirirmi?" Bunu ölçmək üçün keçiddən sonra nə baş verdiyini bilmək lazımdır. Webhook olmasa, statistika "kupon açıldı"da bitir.
 
-Bölmə 11, funnel: "matça baxış → nəticə seçimi → handoff sorğusu → təsdiqlənmiş kupon açılışı". GGR təsirini ölçmək üçün (bölmə 1) bu məlumat lazımdır.
-
-## Cədvəl
-**`partner_webhook_events`**
-| Sütun | Tip |
+## Yeni cədvəl: `partner_webhook_events`
+| Sütun | İzah |
 |---|---|
-| id | uuid PK |
-| tenant_id | uuid |
-| partner_event_id | varchar(100) |
-| correlation_id | uuid |
-| event_type | varchar(50) (`betslip_opened`, `bet_placed`, ...) |
-| occurred_at | timestamptz |
-| payload | jsonb |
-| received_at | timestamptz |
+| id, tenant_id | |
+| partner_event_id | bukmekerin hadisə ID-si |
+| correlation_id | hansı keçidə aiddir |
+| event_type | `betslip_opened`, `bet_placed`... |
+| occurred_at | nə vaxt baş verib |
+| payload | məlumat |
+| received_at | |
 
-UNIQUE (`tenant_id`, `partner_event_id`). Təkrar göndərmə (retry) dublikat yaratmır.
+Unique (`tenant_id`, `partner_event_id`): təkrar göndərmə dublikat yaratmır.
 
-## Necə edəcəksən
-1. `POST /partner/v1/webhooks`. Auth 112-dəki imza ilə.
-2. İmza **xam body** üzərində hesablanır. Fastify JSON parse etdikdən sonra yenidən stringify fərqli ola bilər. Xam body-ni necə əldə edəcəksən? (`addContentTypeParser` və ya `rawBody` plugin.)
-3. Timestamp yoxlaması (±5 dəq.) replay hücumuna qarşı.
-4. Dublikat → 200 (tərəfdaş təkrar göndərməsin), yeni yazı yox.
-5. Tez cavab ver (200), emalı fon job-una ver (049).
-6. **Sənəd qaydası:** `bet_placed` gəlsə belə, RADAR.FAN mərcin qoyulmasını "təsdiqləmir" və heç bir mükafat vermir (bu, qumar stimulu olardı). Yalnız analitika.
+## Nə edəcəksən
+1. `POST /partner/v1/webhooks`, yoxlama 112-dəki imza ilə.
+2. İmza **xam** body üzərində hesablanır. Fastify JSON-u parse edəndən sonra yenidən string-ə çevirsən, fərqli ola bilər. Xam body-ni necə alarsan? Araşdır.
+3. Vaxt yoxlaması (±5 dəqiqə).
+4. Dublikat → 200 (bukmeker təkrar göndərməsin), yeni yazı yox.
+5. Tez 200 qaytar, emalı fon işinə ver.
 
-## Qəbul meyarları
-- [ ] Etibarsız imza → 401.
-- [ ] Eyni `partner_event_id` iki dəfə → bir yazı, iki dəfə 200.
+## Vacib qayda
+`bet_placed` gəlsə belə: biz mərci **təsdiqləmirik** və **heç bir mükafat vermirik** (bu, mərcə təşviq olardı). Yalnız statistika.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Səhv imza → 401.
+- [ ] Eyni hadisə iki dəfə → bir yazı, iki dəfə 200.

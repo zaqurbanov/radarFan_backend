@@ -1,19 +1,19 @@
-# 087 — Başlanğıc coin bonusu (300 ◈)
+# 087 — Başlanğıc coin (300 ◈)
 
-**Faza:** 6 · **Asılılıq:** 086 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 086
 
-## Məqsəd
-Yeni istifadəçi bir dəfə 300 ◈ alsın.
+## Qısaca
+Yeni istifadəçi **bir dəfə** 300 coin alsın.
 
-## Niyə
-Sayt: "300 ◈ на старте."
+## Saytda
+"300 ◈ на старте."
 
-## Necə edəcəksən
-1. Nə vaxt? İlk `/auth/exchange`-də istifadəçi yaradılanda, eyni tranzaksiyada.
-2. `source_type = starting_bonus`, `source_id = user_id`. Unique constraint ikinci dəfəni bloklayır.
-3. Miqdar tenant config-dən (`economy.starting_coins`).
-4. Mövcud istifadəçilər (bu funksiya əlavə olunmazdan əvvəl yaradılanlar)? Migration/backfill skripti, və ya ilk `/me`-də lazy. Qərar ver.
+## Nə edəcəksən
+1. İlk `/auth/exchange`-də istifadəçi yaranan anda, **eyni tranzaksiyada** ver.
+2. Mənbə: `starting_bonus` + `user_id`. Unique qayda ikinci dəfəni bloklayır.
+3. Miqdar tenant ayarından (`economy.starting_coins`).
+4. Bu funksiyadan **əvvəl** yaranmış istifadəçilər nə olsun? Bir dəfəlik skript, və ya ilk `/me`-də? Qərar ver.
 
-## Qəbul meyarları
+## Hazır olduğunu necə yoxlayarsan
 - [ ] Yeni istifadəçinin balansı 300.
-- [ ] Təkrar exchange bonusu təkrar vermir.
+- [ ] Təkrar giriş bonusu təkrar vermir.

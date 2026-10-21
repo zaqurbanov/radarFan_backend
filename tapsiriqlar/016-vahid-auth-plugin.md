@@ -1,27 +1,28 @@
-# 016 — Vahid auth plugin və `req.user` tipi
+# 016 — Bütün route-lar üçün bir auth mexanizmi
 
-**Faza:** 1 · **Asılılıq:** 013 · **Status:** [ ]
-(Köhnə `TASKS.md`: T11)
+**Status:** [ ] · **Faza:** 1 · **Əvvəl bitməli:** 013
 
-## Məqsəd
-Bütün qorunan route-lar bir mexanizmlə yoxlansın və `req.user` tipli olsun.
+## Qısaca
+Bütün qorunan route-lar eyni yolla yoxlansın. `req.user` hər yerdə hazır tipli olsun.
 
-## Niyə
-- İndi `/me` əl ilə `req.jwtVerify()` çağırır, `events` `preHandler` hook istifadə edir, tip isə hər yerdə `as {user_id, tenant_id}` ilə verilir. Yeni route əlavə edəndə yoxlamanı unutmaq asandır.
-- Sənəd (bölmə 8): "/auth/exchange istisna olmaqla bütün endpoint-lər daxili sessiya tələb edir". Default "qorunur" olmalıdır, istisnalar açıq yazılmalıdır.
-- Sənəd (bölmə 6): "Tenant query-dən və ya JSON gövdəsindən deyil, yoxlanmış sessiyadan götürülür."
+## Niyə lazımdır?
+- İndi `/me` token-i əl ilə yoxlayır, `/events` isə hook ilə. Tip isə hər yerdə `as {...}` ilə verilir.
+- Yeni route əlavə edəndə yoxlamanı **unutmaq asandır**. Unudulmuş yoxlama = açıq qapı.
+- Sənəd: `/auth/exchange`-dən başqa **bütün** endpoint-lər giriş tələb edir.
 
-## Necə edəcəksən
-1. `fastify-plugin` (`fp`) ilə `auth` plugin-i yarat. Encapsulation-u öyrən: `fp` olmadan hook-lar yalnız plugin daxilində işləyir.
-2. Strategiya seç:
-   - **Default qorunur:** bütün `/api/v1` üçün hook, public route-lar `config: { public: true }` ilə işarələnir;
-   - **Açıq qoruma:** qorunan route-lar ayrıca qrupda.
-   Tövsiyə: default qorunur, çünki unutmaq "açıq qalmaq" deyil, "bağlı qalmaq" deməkdir.
-3. Declaration merging ilə `FastifyRequest`-ə `user: { id, tenantId, role }` (və ya `@fastify/jwt`-nin `FastifyJWT` interfeysi) əlavə et. `as` cast-ları sil.
-4. Token-dən sonra DB-dən istifadəçini oxumaq lazımdırmı? Hər sorğuda bir SELECT bahadır, amma user `banned` olsa, token 15 dəq. işləyir. Bu, task 018-in mövzusudur. İndi sadəcə qeyd et.
-5. `jwt_preHandler` faylını sil.
+## Ən vacib qərar: default "bağlı" olsun
+- **Default qorunur:** bütün route-lar avtomatik qorunur. Açıq olanları (health, exchange) xüsusi işarələyirsən.
+- **Default açıq:** qorunacaqları ayrıca işarələyirsən.
 
-## Qəbul meyarları
-- [ ] Heç bir route-da `as { user_id ... }` qalmayıb.
-- [ ] Yeni route-u heç nə yazmadan əlavə edəndə o, qorunur (test).
+Birincini seç. Unutsan, route **bağlı** qalır, açıq yox. Bu, daha təhlükəsizdir.
+
+## Nə edəcəksən
+1. `fastify-plugin` ilə `auth` plugin-i yaz. Niyə `fastify-plugin`? Onsuz hook yalnız plugin-in daxilində işləyir. "Encapsulation" mövzusunu oxu.
+2. Açıq route-ları `config: { public: true }` kimi işarələ.
+3. `req.user`-in tipini bir yerdə təyin et: `{ id, tenantId, role }`. Bütün `as {...}` yazılarını sil.
+4. Köhnə `jwt_preHandler` faylını sil.
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Kodda heç bir yerdə `as { user_id ... }` qalmayıb.
+- [ ] Heç nə yazmadan yeni route əlavə edəndə o, avtomatik qorunur (test).
 - [ ] `/auth/exchange`, `/health`, demo route-ları token-siz işləyir.

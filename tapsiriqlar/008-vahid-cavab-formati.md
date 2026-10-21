@@ -1,24 +1,26 @@
-# 008 — Vahid cavab formatı
+# 008 — Bütün cavablar eyni formada
 
-**Faza:** 0 · **Asılılıq:** yoxdur · **Status:** [ ]
-(Köhnə `TASKS.md`: T8-in birinci hissəsi)
+**Status:** [ ] · **Faza:** 0 · **Əvvəl bitməli:** yoxdur
 
-## Məqsəd
-Bütün uğurlu cavablar eyni formada olsun: `{ data: ..., request_id: "..." }`.
+## Qısaca
+Hər uğurlu cavab bu formada olsun:
+```
+{ "data": { ... }, "request_id": "..." }
+```
 
-## Niyə
-- Sənəd (bölmə 8, "Formatlar və xətalar"): "Uğur: {data: object, request_id: string}".
-- İndi `/demo-launch-token` `req_id`, digərləri `request_id` qaytarır. Frontend hər endpoint üçün ayrıca kod yazmalı olacaq.
-- `request_id` dəstəyə müraciət zamanı loqlarda sorğunu tapmaq üçündür (bölmə 10, monitorinq).
+## Niyə lazımdır?
+- Sənəd belə tələb edir (bölmə 8).
+- İndi bir endpoint `req_id`, digəri `request_id` qaytarır. Frontend hər endpoint üçün ayrı kod yazmalı olur.
+- `request_id` dəstək üçündür: istifadəçi "xəta oldu" deyəndə bu ID ilə loglarda həmin sorğunu tapırsan.
 
-## Necə edəcəksən
-1. Hər route-da `{data, request_id: req.id}` əl ilə yazmaq əvəzinə mərkəzi həll düşün. Variantlar:
-   - helper funksiya (`ok(req, data)`),
-   - Fastify `onSend`/`preSerialization` hook-u ilə avtomatik bükmə.
-   Hər birinin mənfi və müsbət tərəfini yaz. (Hook bəzən istəmədiyin cavabları da bükür: health check, WS upgrade, partner webhook cavabları.)
-2. `request_id` mənbəyi: `genReqId` artıq UUID yaradır. Əgər frontend və ya proxy `X-Request-Id` başlığı göndərirsə, onu qəbul etmək istəyirsən? (Fastify `requestIdHeader` seçimi.) Etibarsız istifadəçi girişini loga yazmaq riskini düşün.
-3. Cavab başlığına da `X-Request-Id` əlavə et ki, frontend xətanı göstərəndə ID-ni göstərə bilsin.
+## Nə edəcəksən
+1. Bütün endpoint-ləri gəz, cavabları `{ data, request_id }` formasına sal. `req_id` olan yerləri düzəlt.
+2. Hər route-da bunu əl ilə yazmaq əvəzinə kiçik bir köməkçi funksiya yaz. Məsələn `ok(req, data)`.
+3. Cavab başlığına (header) da `X-Request-Id` əlavə et. Frontend xəta göstərəndə bu ID-ni istifadəçiyə göstərə bilər.
 
-## Qəbul meyarları
-- [ ] Bütün mövcud endpoint-lər `data` və `request_id` qaytarır.
-- [ ] Cavabda `X-Request-Id` başlığı var və body-dəki ilə eynidir.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Bütün endpoint-lər `data` və `request_id` qaytarır.
+- [ ] Cavab başlığında `X-Request-Id` var və body-dəki ilə eynidir.
+
+## Diqqət
+Avtomatik bükmə (hook ilə hər cavabı bükmək) də mümkündür, amma bəzi cavablar bükülməməlidir: health check, WebSocket, bukmekerin webhook-ları. Ona görə köməkçi funksiya daha sadə və aydındır.

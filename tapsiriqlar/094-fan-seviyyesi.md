@@ -1,27 +1,26 @@
 # 094 — Fan səviyyəsi
 
-**Faza:** 6 · **Asılılıq:** 084 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 084
 
-## Məqsəd
-XP-yə görə istifadəçinin statusu/səviyyəsi.
+## Qısaca
+XP-yə görə istifadəçinin səviyyəsi/titulu.
 
-## Niyə
-- Sənəd (bölmə 5): "«Aktiv azarkeş» göstərilməsi üçün hədd 200 XP-dir; MVP-də bu status əlavə üstünlük vermir."
-- Sayt: "Начинающий фанат" ("Мой фан"), "Новичок на радаре" (profil), "ПРОГРЕСС 150 XP". Bir yerdə iki fərqli ad. Frontend-də uyğunsuzluq var və ya fərqli anlayışlardır (personaj titulu vs XP səviyyəsi). Məhsul sahibinə soruş.
+## Sənəd və sayt
+- Sənəd: 200 XP-dən "Aktiv azarkeş". **Heç bir üstünlük vermir.**
+- Sayt: "Начинающий фанат" ("Мой фан"-da), "Новичок на радаре" (profildə). İki fərqli ad. Eyni şeydirmi?
 
 ## Dizayn
-Səviyyələr **saxlanmır**, XP-dən **hesablanır**. Tenant config-də:
+Səviyyə **saxlanmır**, XP-dən **hesablanır**. Tenant ayarında:
 `levels: [{ code: "newbie", min_xp: 0 }, { code: "active_fan", min_xp: 200 }, ...]`
-Başlıqlar (`title`) lokallaşdırılır: kod backend-dən, mətn frontend-dən (və ya config-də locale üzrə).
+Backend kodu qaytarır, mətni frontend tərcümə edir.
 
-## Necə edəcəksən
-1. `computeLevel(xp, levels)` → `{ code, min_xp, next_min_xp, progress_to_next }`.
-2. `/me`-yə (023) əlavə et.
-3. Səviyyə qalxanda bildiriş (`user:` kanalı, `level.up`)? Gözəl əlavədir, MVP üçün istəyə bağlı.
-4. **Üstünlük vermir.** Səviyyəyə görə heç bir funksiya açılmır (sənəd). Bunu kodda da saxla.
+## Nə edəcəksən
+1. Funksiya: `səviyyə(xp)` → `{ code, min_xp, next_min_xp, progress }`.
+2. `/me`-yə əlavə et.
+3. Səviyyə heç bir funksiyanı açmır (sənəd). Kodda da belə saxla.
 
-## Qəbul meyarları
+## Hazır olduğunu necə yoxlayarsan
 - [ ] 199 XP → newbie, 200 XP → active_fan.
 
-## Açıq suallar
-- "Начинающий фанат" və "Новичок на радаре" eyni şeydirmi?
+## Açıq sual
+"Начинающий фанат" və "Новичок на радаре" eyni şeydirmi?

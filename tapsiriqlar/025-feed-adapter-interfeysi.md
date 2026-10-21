@@ -1,33 +1,30 @@
-# 025 — Feed adapter interfeysi
+# 025 — Matç məlumatı üçün "adapter"
 
-**Faza:** 2 · Feed və Nəbz · **Asılılıq:** 021 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 2 · **Əvvəl bitməli:** 021
 
-## Məqsəd
-Matç, bazar və əmsal məlumatlarını hansı provayderdən gəlməsindən asılı olmayaraq eyni formada qəbul edən abstraksiya.
+## Qısaca
+Matçlar və əmsallar fərqli mənbələrdən gələ bilər (demo, bukmeker A, provayder B). Hamısını **eyni formaya** salan bir qat yarat.
 
-## Niyə
-- Sənəd (bölmə 1): "İnteqrasiya olunmuş versiyada matçlar və əmsallar tərəfdaşdan və ya razılaşdırılmış təchizatçıdan gəlir."
-- Bölmə 6: "Təchizatçının məlumat axını serverdə normallaşdırılır."
-- Bölmə 8: "Tərəfdaş adapterinin müqavilələri ayrıca versiyalanır: təchizatçının sahələrini xəbərsiz şəkildə RADAR.FAN-ın açıq modelinə əlavə etmək olmaz."
-- Hər bukmekerin fərqli feed-i ola bilər (`TenantConfig.feed_provider`). Kodun qalanı provayderi bilməməlidir.
+## Niyə lazımdır?
+- Hər bukmekerin məlumat mənbəyi fərqli ola bilər, sahə adları da fərqlidir (`HomeTeamName`, `home_team`, `team1`...).
+- Kodun qalanı (lent, çat, proqnoz) mənbəni **bilməməlidir**. Yalnız bizim formanı tanıyır.
+- Sənəd: mənbənin sahələri bizim modelə xəbərsiz əlavə olunmamalıdır.
 
-## Dizayn (kodsuz təsvir)
-Interfeys `FeedProvider`, metodlar:
-- `listEvents(since?)`: dəyişmiş hadisələr
-- `getEvent(providerEventId)`
-- `subscribe(onUpdate)`: push dəstəkləyən provayderlər üçün (WebSocket/stream)
-- `healthCheck()`
+## Analogiya
+Elektrik adapteri kimi: rozetka fərqli ola bilər, amma cihaz həmişə eyni fişi görür.
 
-Daxili normallaşdırılmış modellər (provayderdən asılı olmayan):
-- `NormalizedEvent`: provider_event_id, sport, league, home, away, status, score, period, start_at, provider_updated_at
-- `NormalizedMarket`: provider_market_id, type (`football_1x2`/`basketball_moneyline`), rules, status, version
-- `NormalizedOutcome`: provider_outcome_id, key (home/draw/away), price (decimal string), status, version
+## Nə edəcəksən
+1. `src/modules/feed/` qovluğu yarat.
+2. `types.ts`: bizim **ortaq** formalarımız:
+   - **Matç:** mənbədəki ID, idman növü, liqa, ev sahibi, qonaq, status, hesab, dövr, başlama vaxtı.
+   - **Bazar:** mənbədəki ID, tip (`football_1x2` və s.), qaydalar, status, versiya.
+   - **Nəticə (outcome):** mənbədəki ID, açar (home/draw/away), qiymət, status, versiya.
+3. Interfeys (`FeedProvider`), metodları:
+   - `listEvents()`: dəyişmiş matçlar;
+   - `getEvent(id)`: bir matç;
+   - `healthCheck()`: mənbə işləyirmi.
+4. `registry.ts`: tenant ayarına görə hansı provayderin işləyəcəyini seçir.
 
-## Necə edəcəksən
-1. `src/modules/feed/` qovluğu: `types.ts` (interfeys + normallaşdırılmış tiplər), `providers/demo.ts` (026), `registry.ts` (config-dəki `type`-a görə provayder seçir).
-2. "Adapter pattern" və "anti-corruption layer" haqqında oxu. Provayderin sahə adları (məs. `HomeTeamName`) bu qatdan kənara çıxmamalıdır.
-3. Hər provayder müqaviləsinin versiyası (`adapter_version`) olsun.
-
-## Qəbul meyarları
-- [ ] Feed modulundan kənarda heç bir fayl konkret provayderi import etmir.
-- [ ] Yeni provayder əlavə etmək üçün yalnız bir fayl + registry-də bir sətir lazımdır.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] `feed` qovluğundan kənarda heç bir fayl konkret provayderi import etmir.
+- [ ] Yeni provayder əlavə etmək = bir yeni fayl + registry-də bir sətir.

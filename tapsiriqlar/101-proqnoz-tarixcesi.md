@@ -1,21 +1,22 @@
 # 101 — Proqnoz tarixçəsi
 
-**Faza:** 7 · **Asılılıq:** 099 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 7 · **Əvvəl bitməli:** 099
 
-## Məqsəd
+## Qısaca
 "История прогнозов" siyahısı.
 
-## Niyə
-Sayt: "Реал Мадрид — Барселона · П1 · 1.72 · 100 ед. · Верный ✓ +72 ед.", "Ничья · 3.10 · 100 ед. · Ожидает расчёта —". Altında: "Архив и расчёт смоделированы. Это статистика прогнозов, без реальных денежных ставок."
+## Saytda
+"Реал Мадрид — Барселона · П1 · 1.72 · 100 ед. · Верный ✓ +72 ед.", "Ничья · 3.10 · Ожидает расчёта —".
+Altında: "Архив и расчёт смоделированы. Это статистика прогнозов, без реальных денежных ставок."
 
 ## Endpoint
-`GET /me/predictions?event_id&status&cursor` → items: { id, event (komandalar), outcome_key, price, stake_units, status, profit_units, created_at, settled_at }
+`GET /me/predictions?event_id&status&cursor` → matç adları, nəticə, əmsal, məbləğ, status, mənfəət, vaxtlar.
 
-## Necə edəcəksən
-1. Cursor: `created_at DESC, id` (031).
-2. `profit_units` hesablanan sahədir: `return − stake` (pending üçün null).
-3. Event adları join ilə (N+1 yox).
-4. Hər cavabda `is_demo` / disclaimer bayrağı. Frontend "смоделированы" mətnini göstərsin.
+## Nə edəcəksən
+1. Cursor: yenidən köhnəyə (031-dəki qayda).
+2. Mənfəət hesablanır: qaytarılan − məbləğ (gözləyən üçün boş).
+3. Matç adlarını `JOIN` ilə götür (N+1 olmasın).
+4. Hər cavabda demo işarəsi olsun ki, frontend "смоделированы" yazsın.
 
-## Qəbul meyarları
-- [ ] Tarixçə statistikanın (100) rəqəmləri ilə uyğundur.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Tarixçənin rəqəmləri statistika (100) ilə uyğundur.

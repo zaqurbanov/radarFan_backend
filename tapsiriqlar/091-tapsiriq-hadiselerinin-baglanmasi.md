@@ -1,36 +1,30 @@
-# 091 — Tapşırıq hadisələrinin bağlanması
+# 091 — Tapşırıqların avtomatik tamamlanması
 
-**Faza:** 6 · **Asılılıq:** 090, 037, 053, 079 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 6 · **Əvvəl bitməli:** 090, 037, 053, 079
 
-## Məqsəd
-Uğurlu server hadisələri müvafiq tapşırığı tamamlasın: həmişəlik və geri qaytarılmadan.
+## Qısaca
+Uğurlu hərəkət müvafiq tapşırığı **həmişəlik** tamamlasın.
 
-## Niyə
-Sənəd:
-- "Uğurlu server hadisələri tapşırıqları həmişəlik tamamlayır; tamamlanmış viktorinada məğlubiyyət də complete_battle tapşırığını yerinə yetirir."
-- "İlk təsdiqlənmiş saxlama save_match tapşırığını tamamlayır. Seçilmişlərdən silmə tapşırığın tamamlanmasını ləğv etmir."
-- "send_message tapşırığı yalnız server mesajı qəbul etdikdən sonra tamamlanır."
-- Abandoned battle tapşırığı tamamlamır (081).
-- Bölmə 8: `POST /rooms/{id}/messages` cavabında `challenge_progress`.
-
-## Hadisə → tapşırıq
-| Hadisə | Tapşırıq | Harada |
+## Hansı hərəkət hansı tapşırığı tamamlayır
+| Hərəkət | Tapşırıq | Task |
 |---|---|---|
-| Favorite insert (yeni) | save_match | 037 |
-| Mesaj qəbul olundu | send_message | 053 |
-| Battle completed (istənilən nəticə) | complete_battle | 079 |
+| Matç seçilmişlərə **ilk dəfə** əlavə olundu | save_match | 037 |
+| Mesaj **qəbul olundu** | send_message | 053 |
+| Duel bitdi (**məğlubiyyət də**) | complete_battle | 079 |
 
-## Necə edəcəksən
-1. Funksiya: `markTaskDone(tx, user, taskCode)`. Biznes tranzaksiyasının **daxilində** çağırılır. Niyə? Mesaj rollback olsa, tapşırıq da tamamlanmamalıdır.
-2. Atomar yeniləmə: `UPDATE challenge_progress SET task_flags = jsonb_set(...), completed_count = completed_count + 1 WHERE ... AND task_flags->>'send_message' IS NULL`. Şərt təkrarı bloklayır.
-3. 3/3 olanda `status = claimable`.
-4. Aktiv challenge-ləri tap: istifadəçinin `in_progress` challenge-lərindən hansında bu `task_code` var?
-5. Dəyişiklik olubsa → outbox `challenge.updated` (093).
-6. Cavaba `challenge_progress` əlavə et (frontend "1/3" göstərsin).
-7. **Alternativ dizayn:** domain events (mesaj modulu "message.sent" hadisəsi atır, challenge modulu dinləyir). Daha az bağlılıq, amma tranzaksiya sərhədi mürəkkəbləşir. Hansını seçirsən?
+## Qaydalar (sənəddən)
+- Seçilmişdən silmək tapşırığı **geri qaytarmır**.
+- Tərk edilmiş duel tapşırığı tamamlamır.
 
-## Qəbul meyarları
-- [ ] Mesaj göndər → `send_message` tamamlanır, ikinci mesaj sayğacı artırmır.
-- [ ] Favorit əlavə et → sil → yenidən əlavə et: tapşırıq tamamlanmış qalır, sayğac 1.
-- [ ] Məğlub olunmuş, amma tamamlanmış battle → `complete_battle` tamamlanır.
-- [ ] Abandoned battle → tamamlanmır.
+## Nə edəcəksən
+1. Funksiya: `tapşırığı_işarələ(tx, user, kod)`. **Əsas əməliyyatın tranzaksiyasının içində** çağırılır. Niyə? Mesaj yazılmasa, tapşırıq da tamamlanmamalıdır.
+2. Atomar yeniləmə: "bu tapşırıq hələ boşdursa, işarələ və sayğacı +1 et". Şərt təkrarı bloklayır.
+3. 3/3 olanda → `claimable`.
+4. Dəyişiklik olubsa → `challenge.updated` bildirişi (093).
+5. Mesaj cavabına `challenge_progress` əlavə et (frontend "1/3" göstərsin).
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Mesaj göndər → tapşırıq tamamlanır. İkinci mesaj sayğacı artırmır.
+- [ ] Əlavə et → sil → yenidən əlavə et: tapşırıq tamamlanmış qalır, sayğac 1.
+- [ ] Uduzulmuş, amma bitmiş duel → tamamlanır.
+- [ ] Tərk edilmiş duel → tamamlanmır.

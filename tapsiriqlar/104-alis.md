@@ -1,27 +1,31 @@
-# 104 — Əşya alışı: `POST /shop/items/{id}/purchase`
+# 104 — Əşya almaq
 
-**Faza:** 8 · **Asılılıq:** 086, 103, 036 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 8 · **Əvvəl bitməli:** 086, 103, 036
 
-## Məqsəd
-Coin xərcləyib əşya almaq: atomar, ikiqatsız, mənfi balanssız.
+## Qısaca
+Coin xərcləyib əşya almaq: **atomar**, ikiqatsız, mənfi balanssız.
 
-## Niyə
-Sayt: "Кепка PULSE · 80 ◈ · Баланс: 360 ◈ · Купить за 80 ◈" → "В твоём гардеробе · Баланс: 280 ◈ · Надеть". "Примерка не меняет текущий образ" (примерка = sınama tamamilə frontend-dir, backend lazım deyil).
+## Saytda
+"Кепка PULSE · 80 ◈ · Баланс: 360 ◈ · Купить за 80 ◈" → "В твоём гардеробе · Баланс: 280 ◈ · Надеть".
+"Примерка" (sınamaq) **tamamilə frontend-dir**, backend lazım deyil.
 
-## Tranzaksiya
-1. Idempotency-Key (036).
-2. Əşya `active`, bu tenant-ın, default deyil.
-3. Artıq sahibdir → 409 `ALREADY_OWNED` (və ya idempotent 200? Fərqli key ilə ikinci alış cəhdi 409 olmalıdır).
-4. `spendCoins(price)` (086): atomar `UPDATE ... WHERE coins >= price`. Uğursuz → 409 `INSUFFICIENT_COINS` + `details: { balance, price }`.
-5. `coin_ledger` qeydi: `source_type = purchase`, `source_id = item_id`. Unique (user, purchase, item_id) ikinci alışı DB səviyyəsində bloklayır.
-6. `user_items` insert.
-7. Outbox: `coins.updated`.
-8. Cavab: item, coin_balance.
+## Endpoint
+`POST /shop/items/{id}/purchase` (Idempotency-Key ilə) → əşya, yeni coin balansı.
 
-**Sual:** addım 3 və addım 5-dəki unique constraint eyni şeyi yoxlayır. Hər ikisi niyə lazımdır? (3 → yaxşı xəta mesajı; 5 → race condition-da son müdafiə.)
+## Addımlar (bir tranzaksiyada)
+1. Əşya aktivdir, bu tenant-ındır, pulsuz deyil.
+2. Artıq sahibdir → 409 `ALREADY_OWNED`.
+3. Coin-i **atomar** xərclə (086). Çatmır → 409 `INSUFFICIENT_COINS` + `details: { balance, price }`.
+4. Coin jurnalına yaz: mənbə `purchase` + əşya ID. Unique qayda ikinci alışı **baza səviyyəsində** bloklayır.
+5. Qarderoba əlavə et.
+6. Bildiriş: `coins.updated`.
 
-## Qəbul meyarları
-- [ ] 360 → 80-lik alış → 280, qarderobda əşya.
-- [ ] Balans 50, qiymət 80 → 409 `INSUFFICIENT_COINS`, heç nə dəyişmir.
-- [ ] Eyni əşya üçün 5 paralel alış → bir alış, bir xərc (test).
+## Sual
+Addım 2 və addım 4 eyni şeyi yoxlayır. Niyə ikisi də lazımdır?
+(Cavab: 2 → istifadəçiyə aydın xəta mesajı; 4 → eyni anda iki sorğu gələndə son müdafiə.)
+
+## Hazır olduğunu necə yoxlayarsan
+- [ ] 360 → 80-lik alış → 280, əşya qarderobda.
+- [ ] Balans 50, qiymət 80 → 409, heç nə dəyişmir.
+- [ ] Eyni əşya üçün eyni anda 5 alış → bir alış, bir xərc (test).
 - [ ] Balans heç vaxt mənfi olmur.

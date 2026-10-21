@@ -1,55 +1,51 @@
-# 129 — Real duel: matchmaking növbəsi
+# 129 — Real duel: rəqib axtarışı (növbə)
 
-**Faza:** 13 · 2-ci mərhələ (real duel) · **Asılılıq:** 073–082, 044 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 13 · **Əvvəl bitməli:** 073–082, 044
 
-## Məqsəd
-İki real istifadəçini duel üçün cütləşdirmək.
+## Qısaca
+İki real istifadəçini duel üçün cütləşdir.
 
-## Niyə
-Sənəd (bölmə 10):
-- "2-ci mərhələnin ayrıca qiymətləndirilməsi matchmaking növbəsini, iki iştirakçını, sinxron sualları, reconnect-i və server nəticəsini əhatə edir. Vəziyyətlər: queued → matched → ready → question_open → question_closed → completed. Başlamadan ləğv — cancelled; server nasazlığı — aborted."
-- "Növbənin 30 saniyəlik timeout-u təkrar cəhd və ya açıq şəkildə göstərilən demo mode təklif edir; rəqib gizlicə əvəz edilmir."
-- "Cütləşdirmə tenant və dil daxilində aparılır."
-- "Real mode üçün POST /matchmaking, DELETE /matchmaking/{ticket_id}, POST /battles/{id}/ready, həmçinin MatchmakingTicket və BattleParticipant cədvəlləri əlavə edilməlidir. Cütlüyün yaradılması atomar olmalıdır; bir istifadəçinin iki cihazı iki növbə yaratmır."
+## Qaydalar (sənəddən)
+- Vəziyyətlər: `queued` (növbədə) → `matched` (cütləşdi) → `ready` → sual açıq → sual bağlı → `completed`. Başlamadan ləğv → `cancelled`, server xətası → `aborted`.
+- **30 saniyə** rəqib tapılmasa → "yenidən cəhd et" və ya **açıq şəkildə** demo bot təklif et. **Gizlicə bot qoşmaq qadağandır!**
+- Cütləşmə eyni bukmeker və eyni dildə.
+- Bir istifadəçinin iki cihazı iki növbə yaratmır.
 
-## Cədvəllər
+## Endpoint-lər
+`POST /matchmaking`, `DELETE /matchmaking/{ticket_id}`, `POST /battles/{id}/ready` (130).
+
+## Yeni cədvəllər
 **`matchmaking_tickets`**
-| Sütun | Tip |
+| Sütun | İzah |
 |---|---|
-| id | uuid PK |
-| tenant_id | uuid |
-| user_id | uuid |
-| locale | varchar(10) |
-| status | enum(`queued`, `matched`, `cancelled`, `expired`) |
-| battle_id | uuid NULL |
-| created_at, expires_at | timestamptz (30 san.) |
+| id, tenant_id, user_id | |
+| locale | dil |
+| status | `queued` / `matched` / `cancelled` / `expired` |
+| battle_id | cütləşəndə |
+| created_at, expires_at | (30 saniyə) |
 
-Partial UNIQUE (`tenant_id`, `user_id`) WHERE `status = 'queued'`. "İki cihaz iki növbə yaratmır".
+Partial unique: (`tenant_id`, `user_id`) yalnız `status = queued` olanda. "İki cihaz = bir növbə."
 
-**`battle_participants`** (demo-dakı `battles.user_id`-nin əvəzi)
-| Sütun | Tip |
+**`battle_participants`**: duel iştirakçıları (demo-dakı `battles.user_id` əvəzinə)
+| Sütun | İzah |
 |---|---|
-| battle_id | uuid FK |
-| user_id | uuid FK |
-| seat | smallint (1/2) |
-| ready_at | timestamptz NULL |
-| score | smallint |
-| answered_any | boolean |
-| xp_eligible | boolean |
-| result | enum NULL |
+| battle_id, user_id | əsas açar |
+| seat | 1 və ya 2 |
+| ready_at | |
+| score | |
+| answered_any | ən azı bir cavab verib? |
+| xp_eligible | |
+| result | |
 
-PK (`battle_id`, `user_id`).
+Demo duel-ləri də bu cədvələ köçürmək lazım olacaq. Planını qur.
 
-Demo battle-lar da bu cədvələ köçürülməlidir (bot iştirakçı kimi?). Migration planı qur.
+## Nə edəcəksən
+1. Növbə harada? Redis (sürətli) və ya DB (`FOR UPDATE SKIP LOCKED`). Əsas şərt: iki bilet **bir tranzaksiyada** cütləşir.
+2. Növbə açarı: `mm:{tenant}:{dil}`.
+3. Cütləşdirici: fon işi (hər 0.5–1 saniyə), və ya növbəyə girəndə gözləyən varsa dərhal.
+4. Bildiriş (`user:` kanalı): `matchmaking.matched { battle_id }`.
 
-## Necə edəcəksən
-1. Növbə harada? Redis (sürətli, `LPOP` atomar) yoxsa DB (`FOR UPDATE SKIP LOCKED`)? Atomar cütləşdirmə: iki bilet götürülür və bir tranzaksiyada `matched` olur.
-2. Növbə açarı: `mm:{tenant}:{locale}`.
-3. Matchmaker: ayrıca job (049), hər 0.5–1 san. növbəni yoxlayır. Yaxud `POST /matchmaking` zamanı dərhal gözləyən biri varsa cütləşdirir.
-4. 30 san. timeout → `expired` + WS `matchmaking.timeout` → frontend "yenidən cəhd və ya **açıq** demo rejim" təklif edir. **Gizlicə bot qoşmaq qadağandır.**
-5. WS: `user:{id}` kanalında `matchmaking.matched { battle_id }`.
-
-## Qəbul meyarları
-- [ ] Eyni tenant və dildə iki istifadəçi cütləşir.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Eyni bukmeker və dildə iki istifadəçi cütləşir.
 - [ ] Bir istifadəçinin iki cihazı iki bilet yarada bilmir.
-- [ ] 3 nəfər eyni anda növbəyə girəndə: bir cüt + biri gözləyir, heç kim iki battle-a düşmür (test).
+- [ ] 3 nəfər eyni anda → bir cüt + biri gözləyir, heç kim iki duelə düşmür (test).

@@ -1,41 +1,38 @@
-# 059 — Mesaj like (♡)
+# 059 — Mesajı bəyənmək (♡)
 
-**Faza:** 4 · **Asılılıq:** 051 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 4 · **Əvvəl bitməli:** 051
 
-## Məqsəd
+## Qısaca
 İstifadəçi mesajı bəyənə və bəyənməni geri ala bilsin.
 
-## Niyə
-- Sayt: hər mesajın altında "♡".
-- **Ziddiyyət:** sənəd (bölmə 4): "MVP-də şəxsi mesajlar, əlavələr, **reaksiyalar** ... yoxdur." Sayt əsas versiyadır, ona görə edirik. Amma məhsul sahibinə qeyd et.
+## Qeyd
+Sənəd deyir: "MVP-də reaksiyalar yoxdur". Sayt isə ♡ göstərir. Sayt əsas versiya olduğu üçün edirik. Məhsul sahibinə qeyd et.
 
-## Cədvəl
-**`message_likes`**
-| Sütun | Tip |
+## Yeni cədvəl: `message_likes`
+| Sütun | İzah |
 |---|---|
-| tenant_id | uuid |
-| message_id | uuid FK → messages (cascade) |
-| user_id | uuid FK → users |
-| created_at | timestamptz |
+| tenant_id | |
+| message_id | |
+| user_id | |
+| created_at | |
 
-PK (`message_id`, `user_id`). Bir istifadəçi bir like.
-`messages.like_count` denormalizasiya.
+Əsas açar (`message_id`, `user_id`): bir adam bir mesajı bir dəfə bəyənir.
+`messages.like_count`: tez göstərmək üçün sayğac.
 
-## Endpoint
+## Endpoint-lər
 | Metod | Yol | Cavab |
 |---|---|---|
 | PUT | /messages/{id}/like | `{ liked: true, like_count }` |
 | DELETE | /messages/{id}/like | `{ liked: false, like_count }` |
 
-## Necə edəcəksən
-1. Idempotent (037 kimi).
-2. `like_count`-u necə yeniləyirsən? `UPDATE ... SET like_count = like_count + 1` yalnız insert **həqiqətən** olubsa. Yoxsa təkrar PUT sayğacı artırır.
-3. Real vaxt: `room.message.liked { message_id, like_count }`. Hər like-da broadcast? Populyar mesajda saniyədə 100 like. Throttle/coalesce (047 kimi).
-4. Öz mesajını bəyənmək olarmı? Gizlədilmiş mesajı?
+## Diqqət: sayğacı düzgün artır
+`like_count + 1`-i **yalnız** like həqiqətən yazılıbsa et. Yoxsa təkrar PUT sayğacı artırır.
 
-## Qəbul meyarları
-- [ ] Eyni istifadəçi iki dəfə like → `like_count` 1.
-- [ ] 50 paralel like 50 fərqli istifadəçidən → `like_count` 50 (race yoxdur).
+## Nə edəcəksən
+1. Idempotent et (037-dəki kimi).
+2. Like dəyişəndə hamıya bildiriş: `room.message.liked`. Populyar mesajda saniyədə 100 like ola bilər → seyrəlt.
+3. Qərar ver: öz mesajını bəyənmək olar? Gizlədilmiş mesajı?
 
-## Açıq suallar
-- Reaksiyalar sənəddə MVP-dən kənardır. Sayta əsasən daxil edildi.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Eyni adam iki dəfə like → sayğac 1.
+- [ ] 50 fərqli adam eyni anda like → sayğac 50.

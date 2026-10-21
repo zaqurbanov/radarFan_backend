@@ -1,33 +1,33 @@
-# 118 — Demo sıfırlama ("Сбросить демо")
+# 118 — "Сбросить демо"
 
-**Faza:** 10 · **Asılılıq:** 015, 083, 086, 097 · **Status:** [ ]
+**Status:** [ ] · **Faza:** 10 · **Əvvəl bitməli:** 015, 083, 086, 097
 
-## Məqsəd
-Demo istifadəçi öz demo vəziyyətini ilkinə qaytara bilsin.
+## Qısaca
+Demo istifadəçi öz vəziyyətini başlanğıca qaytara bilsin.
 
-## Niyə
-Sayt (profil): "Мои избранные · **Сбросить демо**". Demo-nu nümayiş edən şəxs (məs. satış komandası) hər görüşdən əvvəl təmiz başlamaq istəyir.
+## Saytda
+Profildə: "Мои избранные · **Сбросить демо**". Nümayiş edən (məs. satış komandası) hər görüşdən əvvəl təmiz başlamaq istəyir.
 
 ## Problem
-Ledger **dəyişdirilməzdir** (083). "Sıfırlama" ledger-i silə bilməz.
+Jurnallar (XP, coin) **dəyişdirilə və silinə bilməz** (083). "Sıfırlamaq" onları silə bilməz.
 
 ## Həll variantları
 | Variant | Necə |
 |---|---|
-| A. Kompensasiya qeydləri | `adjustment` qeydləri ilə XP/coin-i ilkinə gətir; favorites, predictions, inventar silinir |
-| B. Yeni demo istifadəçi | Köhnə `external_user_id`-ni arxivləşdir, yeni istifadəçi yarat (təmiz tarixçə) |
+| A. Düzəliş sətirləri | XP/coin-i mənfi düzəlişlərlə başlanğıca gətir, seçilmişləri, proqnozları, qarderobu sil |
+| **B. Yeni demo istifadəçi** | Köhnə istifadəçini arxivə göndər, yenisini yarat (təmiz tarixçə ilə) |
 
-B daha təmizdir: ledger toxunulmaz qalır, bütün asılı məlumat avtomatik "yoxa çıxır". Tövsiyə: B.
+**Tövsiyə: B.** Jurnallar toxunulmaz qalır, köhnə məlumat avtomatik "yoxa çıxır".
 
 ## Endpoint
-`POST /demo/reset` (yalnız `APP_MODE=demo` və `tenant.mode=demo`, 015).
+`POST /demo/reset`: **yalnız** demo serverdə və demo tenant-da (015).
 
-## Necə edəcəksən
-1. B variantı: `users.external_user_id`-ni `ext_nihal_01#archived#{timestamp}` kimi dəyiş, yeni sessiya üçün yeni istifadəçi yaradılır. Frontend reset-dən sonra yenidən exchange edir.
-2. Production-da bu endpoint **mövcud olmamalıdır**.
-3. Demo feed-i də sıfırlamaq (026)? Bu, bütün demo istifadəçilərə təsir edir. Ayrı admin əməliyyatı olsun.
+## Nə edəcəksən (B variantı)
+1. Köhnə istifadəçinin `external_user_id`-sini dəyiş (məs. `ext_nihal_01#archived#...`).
+2. Frontend yenidən giriş edir → yeni təmiz istifadəçi yaranır.
+3. Production-da bu endpoint **ümumiyyətlə olmasın**.
 
-## Qəbul meyarları
-- [ ] Reset-dən sonra XP 0 (və ya sənədə görə başlanğıc), coin 300, favorit yox, proqnoz yox, default qarderob.
-- [ ] Ledger-dən heç bir sətir silinmir.
+## Hazır olduğunu necə yoxlayarsan
+- [ ] Sıfırlamadan sonra: XP 0, coin 300, seçilmiş yox, proqnoz yox, qarderob başlanğıc.
+- [ ] Jurnallardan heç bir sətir silinməyib.
 - [ ] Production-da 404.
