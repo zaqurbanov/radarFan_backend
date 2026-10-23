@@ -30,5 +30,23 @@ Server start xətalarını düzgün tutsun və dayandırılanda (deploy, Ctrl+C)
 - Unix siqnalları: SIGTERM (Docker/Kubernetes) və SIGINT
 
 ## Qəbul meyarları
-- [ ] Port məşğul olanda server aydın xəta ilə dayanır (exit code 1).
-- [ ] Ctrl+C sonrası loglarda "DB closed", "Redis closed" ardıcıllığı görünür, proses asılı qalmır.
+- [x] Port məşğul olanda server aydın xəta ilə dayanır (exit code 1).
+- [x] Ctrl+C sonrası DB və Redis bağlanır, proses asılı qalmır (`npx tsx src/server.ts` ilə yoxlanıb).
+
+---
+
+## Bağlanış qeydi: nə edildi
+- `server.ts`: `await app.listen(...)`; xəta olarsa `app.log.error` + `process.exit(1)`.
+- `SIGINT` və `SIGTERM` → `shutdownHelper` (`src/common/helper/shutdown.helper.ts`).
+- `buildApp()` daxilində `onClose` hook-u: DB (`db.$client.end()`) və Redis (`quit()`) **paralel** bağlanır (`Promise.allSettled`), hər nəticə ayrıca loglanır. Biri sınsa belə digəri bağlanır.
+- `isShuttingDown` bayrağı: ikinci Ctrl+C shutdown-u yenidən başlatmır.
+- 10 saniyəlik timeout: bağlanma ilişərsə proses `exit(1)` ilə çıxır.
+- Loglar üçün `app.log` istifadə olunur.
+- `db` və `redis` `FastifyInstance`-ə `decorate` olunub. `fastify.d.ts`-də tiplər `typeof db` və `typeof redis`-dir (`any` yox).
+
+## Bilməli olduğun məsələ
+**Windows-da `npm run dev` (`tsx watch`) Ctrl+C-ni udur**: siqnal serverə çatmır və shutdown logları çıxmır. Shutdown-u yoxlamaq üçün `npx tsx src/server.ts` (watch-sız) istifadə et. Linux və Docker-də problem yoxdur.
+
+## Sonraya saxlananlar
+- [ ] Timeout (`10000`) env-ə çıxarıla bilər (`SHUTDOWN_TIMEOUT_MS`).
+- [ ] "Gedən sorğu zamanı Ctrl+C" testini (5-ci test) bir dəfə əl ilə yoxla.

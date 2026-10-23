@@ -18,9 +18,9 @@ Faiz: həmin faza bitəndə backend-in təxminən neçə faizi hazırdır.
 - [x] [005 — Schema səliqəsi: adlar, `updated_at`, dairəvi import](005-schema-seliqesi.md)
 - [x] [006 — Docker Compose ilə lokal mühit](006-docker-compose-lokal-muhit.md)
 - [x] [007 — Migration və seed iş axını](007-migration-ve-seed-is-axini.md)
-- [ ] [008 — Bütün cavablar eyni formada](008-vahid-cavab-formati.md)
-- [ ] [009 — Xəta kodları sistemi](009-xeta-kodlari-sistemi.md)
-- [ ] [010 — Gələn məlumatın yoxlanması (validasiya)](010-input-validasiyasi.md)
+- [x] [008 — Bütün cavablar eyni formada](008-vahid-cavab-formati.md)
+- [x] [009 — Xəta kodları sistemi](009-xeta-kodlari-sistemi.md)
+- [x] [010 — Gələn məlumatın yoxlanması (validasiya)](010-input-validasiyasi.md)
 - [ ] [011 — Loglar: səliqəli və təhlükəsiz](011-request-id-logger-redaction.md)
 - [ ] [012 — Avtomatik testlər üçün hazırlıq](012-test-infrastrukturu.md)
 

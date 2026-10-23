@@ -1,6 +1,6 @@
 # 008 — Bütün cavablar eyni formada
 
-**Status:** [ ] · **Faza:** 0 · **Əvvəl bitməli:** yoxdur
+**Status:** [x] Həll olunub · **Faza:** 0 · **Əvvəl bitməli:** yoxdur
 
 ## Qısaca
 Hər uğurlu cavab bu formada olsun:
@@ -19,8 +19,21 @@ Hər uğurlu cavab bu formada olsun:
 3. Cavab başlığına (header) da `X-Request-Id` əlavə et. Frontend xəta göstərəndə bu ID-ni istifadəçiyə göstərə bilər.
 
 ## Hazır olduğunu necə yoxlayarsan
-- [ ] Bütün endpoint-lər `data` və `request_id` qaytarır.
-- [ ] Cavab başlığında `X-Request-Id` var və body-dəki ilə eynidir.
+- [x] Bütün endpoint-lər `data` və `request_id` qaytarır (`req_id` heç yerdə qalmayıb).
+- [x] Cavab başlığında `X-Request-Id` var (200, 401, 404-də) və body-dəki ilə eynidir.
 
 ## Diqqət
 Avtomatik bükmə (hook ilə hər cavabı bükmək) də mümkündür, amma bəzi cavablar bükülməməlidir: health check, WebSocket, bukmekerin webhook-ları. Ona görə köməkçi funksiya daha sadə və aydındır.
+
+---
+
+## Bağlanış qeydi: nə edildi
+- `src/common/responses/success.ts`: `successResponse<T>(data, req)`. Generic tipli, `request_id` məcburidir, `success` sahəsi yoxdur.
+- Bütün endpoint-lər ona keçib: `/health`, `/demo-launch-token`, `/auth/exchange`, `/me`, `/events`.
+- `app.ts`-də `onSend` hook-u hər cavaba `x-request-id` başlığı yazır (uğurda da, xətada da, 404-də də).
+- `requestIdHeader` seçimi **silindi**: onsuz client başlıqla öz ID-sini yeridə bilmir (test edilib: `EVIL-123` geri qayıtmadı). Server həmişə özü UUID yaradır.
+- Xəta cavabında açar `request_id` (snake_case) olur, uğur cavabı ilə eyni.
+
+## Sonraya saxlananlar (task 009)
+- Xəta cavabının tam forması: `{ error: { code, message, retryable, details }, request_id }`. İndi hələ `{ error: "...", request_id }`.
+- 404 (olmayan route) hələ Fastify-ın standart cavabını verir: `setNotFoundHandler` lazımdır.

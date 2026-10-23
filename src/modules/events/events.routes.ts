@@ -1,24 +1,30 @@
 import { limitHelper } from "@/common/helper/limit.helper.js";
 import { jwt_preHandler } from "@/common/jwt/preHandler.js";
-import type { SportType } from "@/common/types/types.js";
+import { successResponse } from "@/common/responses/success.js";
 import { db } from "@/db/index.js";
-import { events, favorites, markets, outcomes } from "@/db/schema.js";
+import { events, favorites, markets, outcomes, sportEnum } from "@/db/schema.js";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+import {z} from "zod"
 
 
-
-export async function eventsRoutes (app:FastifyInstance){
-
+export async function eventsRoutes (rawApp:FastifyInstance){
+const app = rawApp.withTypeProvider<ZodTypeProvider>()
   jwt_preHandler(app);
 
-  app.get('/events',async (req)=>{
+  app.get('/events',{
+    schema:{
+      querystring:z.object({
+        sport:z.enum(sportEnum.enumValues).optional(),
+        favorites:z.enum(['true','false']).optional(),
+        limit:z.coerce.number().min(1).max(50).int().transform(String).optional(),
+      })
+    }
+  },async (req)=>{
       const user =  req.user as{user_id:string,tenant_id:string}
-      const query = req.query as {
-        sport?:SportType,
-        favorites?:string,
-        limit?:string}
 
+        const {query} = req
         const limit = limitHelper(query.limit as string || '20')
 //finds favorites matches for selected user
 
@@ -34,10 +40,8 @@ export async function eventsRoutes (app:FastifyInstance){
         const favEventIds = new Set(userFavs.map(f=>f.eventId))
         // Əgər "Seçilmişlər" filtri aktivdirsə və seçilmiş matç yoxdursa, boş siyahı qaytar
     if (query.favorites === "true" && favEventIds.size === 0) {
-      return {
-        data: { items: [], next_cursor: null, server_time: new Date().toISOString() },
-        request_id: req.id,
-      };
+      const data ={items: [], next_cursor: null, server_time: new Date().toISOString()}
+      return successResponse(data,req);
     }
 
     // all events for spesific tenant and user 
@@ -101,14 +105,9 @@ export async function eventsRoutes (app:FastifyInstance){
         };
       })
     );
-
-    return {
-      data: {
-        items,
+const data = { items,
         next_cursor: null,
-        server_time: new Date().toISOString(),
-      },
-      request_id: req.id,
-    };
+        server_time: new Date().toISOString(),}
+        return successResponse(data,req);
   })
 }

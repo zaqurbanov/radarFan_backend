@@ -33,7 +33,20 @@ Mövcud 6 cədvəl ardıcıl adlandırılsın, `updated_at` həqiqətən yenilə
 - Kodda köhnə adla qalan istifadələr (`uptadedAt`) TS xətası verəcək. Bu yaxşıdır, hamısını tap.
 
 ## Qəbul meyarları
-- [ ] `Grep "uptaded"` heç nə tapmır.
-- [ ] DB-də bütün sütunlar snake_case-dir.
-- [ ] Bir sətri update edəndə `updated_at` dəyişir (əl ilə yoxla).
-- [ ] Sxem fayllarında `@/db/schema.js` importu yoxdur.
+- [x] `Grep "uptat"` heç nə tapmır (`updatedAt` düzəldildi).
+- [x] DB-də bütün sütunlar snake_case-dir (`rulesVersion` → `rules_version`, məlumat qorunub).
+- [x] `db.update()` zamanı `updated_at` dəyişir (test edilib).
+- [x] Sxem fayllarında `@/db/schema.js` importu yoxdur (enum-lar birbaşa `enums.ts`-dən).
+
+---
+
+## Bağlanış qeydi: nə edildi və hansı qərarlar verildi
+- `rulesVersion` sütunu **`RENAME COLUMN`** ilə dəyişdirildi (drop+create yox), məlumat qorundu.
+- `updated_at` üçün **`$onUpdate(() => new Date())`** seçildi (trigger yox). Bu, 5 cədvəldədir: `tenants`, `users`, `events`, `markets`, `outcomes`.
+- `markets`-ə `created_at` və `updated_at` əlavə olundu.
+- `markets.schema.ts`-dəki dairəvi import həll olundu.
+
+## Bilməli olduğun məsələlər
+- `$onUpdate` yalnız **Drizzle-ın** update və upsert sorğularında işləyir. Xam SQL (`db.execute(sql...)`) və birbaşa `psql` UPDATE-i `updated_at`-ı yeniləmir. Bunu bilərəkdən qəbul etdik.
+- Upsert-də də işləyir: `onConflictDoUpdate` SQL-inə `"updated_at" = $n` avtomatik əlavə olunur (yoxlanılıb). Bu, task 027 və 029 üçün vacibdir.
+- Migration tarixçəsi bu task-dan sonra **re-baseline** olundu (task 007): bir yeni `0000_amused_juggernaut.sql`.

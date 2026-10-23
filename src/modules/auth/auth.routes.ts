@@ -3,10 +3,16 @@ import type { FastifyInstance } from "fastify";
 import  {tenants, users} from "@/db/schema.js" 
 import { db } from "@/db/index.js";
 import { and, eq } from "drizzle-orm";
-import { AccessDenied, SessionExpiredError, UnauthorizedError } from "@/common/error/appErrors.js";
 import { redis } from "@/config/redis.js";
 import { env } from "@/config/env.js";
-export async function authRoutes(app:FastifyInstance){
+import { successResponse } from "@/common/responses/success.js";
+import { AccessDenied, SessionExpiredError } from "@/common/error/appErrors.js";
+import {z} from 'zod';
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+
+export async function authRoutes(rawApp:FastifyInstance){
+
+  const app = rawApp.withTypeProvider<ZodTypeProvider>()
 
   // demo ucun yaradilan token
   app.post('/demo-launch-token',async(req,res)=>{
@@ -29,24 +35,35 @@ export async function authRoutes(app:FastifyInstance){
       nonce: crypto.randomUUID(),
       locale: 'az',
     }, { expiresIn: '60s' });
-
-    return { data: { launch_token: launchToken }, req_id: req.id };
+    const data = { launch_token: launchToken }
+    return successResponse(data,req);
     
   })
 
 
-  app.post('/auth/exchange',async(req,res)=>{
-    const {launch_token} = req.body as {launch_token:string}
-
-    if(!launch_token) throw new UnauthorizedError()
-
-   const payload = app.jwt.verify<{
+  app.post('/auth/exchange',{
+    schema:{
+      body:z.object({
+        launch_token:z.string().min(1),
+      })
+    }
+  },async(req,res)=>{
+    // body heç göndərilməyə bilər (undefined), ona görə tipdə "| undefined" yazırıq
+    // const body = req.body as { launch_token?: string } | undefined
+    // const launch_token = body?.launch_token
+    // if(!launch_token) throw new BadRequestError()
+      let payload =null
+      try {
+           payload = app.jwt.verify<{
         tenant_id: string;
         external_user_id: string;
         nickname?: string;
         nonce: string;
-      }>(launch_token);
-
+      }>(req.body.launch_token);
+      } catch (error) {
+        throw new SessionExpiredError()
+      }
+ 
       const nonceKey = `nonce:${payload.nonce}`;
       
      const result= await redis.set(nonceKey,'1','EX',60,'NX')
@@ -73,16 +90,14 @@ export async function authRoutes(app:FastifyInstance){
         { user_id: user!.id, tenant_id: tenant.id, role: user!.role },
         { expiresIn: env.ACCESS_TOKEN_TTL || '15m' }
       );
-
-      return {
-        data: {
-          access_token: accessToken,
+      const data = {
+         access_token: accessToken,
           expires_at: expiresAt,
           user: { id: user!.id, nickname: user!.nickname, role: user!.role, status: user!.status },
           config: tenant.config,
-        },
-        request_id: req.id,
-      };
+      }
+
+      return successResponse(data,req)
   })
 
 
@@ -90,13 +105,12 @@ export async function authRoutes(app:FastifyInstance){
       const decoded = await req.jwtVerify<{user_id:string,tenant_id:string}>()
       const [user] = await db.select().from(users).where(eq(users.id,decoded.user_id)) 
       if (!user) throw new AccessDenied()
-      return {
-        data: {
-          user: { id: user.id, nickname: user.nickname, role: user.role, status: user.status },
+        const data = {
+      user: { id: user.id, nickname: user.nickname, role: user.role, status: user.status },
           xp_balance: 0, // Mərhələ 5-də XpLedger cədvəlindən hesablanacaq
           challenge_summary: { completed_tasks: 0, total_tasks: 3, status: 'in_progress' },
-        },
-        request_id: req.id,
-      }; 
+      }
+      return successResponse(data,req)
+  
   })
 } 

@@ -22,6 +22,21 @@ Layihədə təhlükəli və ya istifadə olunmayan şeylər qalmasın.
 - ESLint + `typescript-eslint` (istəyə bağlı)
 
 ## Qəbul meyarları
-- [ ] `fix.ts` yoxdur.
-- [ ] `npm install` heç bir Prisma əmri işlətmir.
-- [ ] `npm run typecheck` xətasız keçir.
+- [x] `fix.ts` yoxdur.
+- [x] `npm install` heç bir Prisma əmri işlətmir (`postinstall` silinib).
+- [x] `npm run typecheck` (`tsc --noEmit`) xətasız keçir.
+
+---
+
+## Bağlanış qeydi: nə edildi
+- `fix.ts` və `postinstall` (prisma) silindi. `noUnusedLocals: true` aktivdir.
+- `package.json`: `build`, `start`, `typecheck` skriptləri.
+- `tsconfig.json`: `rootDir: ./src`, `outDir: ./dist`.
+- **Kompilyasiya nəticələri repodan təmizləndi.** `tsc` bir dəfə `outDir`-siz işləyib `src/**/*.js`, `.d.ts`, `.js.map` yaratmışdı və bunlar səhvən commit olunmuşdu. Ayrıca commit-lərlə silindi (tarixçədə qalır, çünki hələ push olunmamışdı və tarixi yenidən yazmadıq).
+- `.gitignore`: `/dist`, `*.js`, `*.js.map`, `*.d.ts.map`.
+
+## Bilməli olduğun məsələlər
+- `*.js` qaydası bütün layihəyə aiddir. Sabah əl ilə yazılmış `vitest.config.js` kimi fayl **səssizcə ignore olunacaq**. Lazım gələrsə `!` istisnası əlavə et.
+- `src/common/types/fastify.d.ts` **əl ilə yazılmış** mənbə faylıdır, ona görə `*.d.ts` qaydası yazılmayıb.
+- `npm start` hələ işləmir: `tsc` `@/` yollarını dəyişmir. Həlli task 127-dədir (`tsc-alias` və ya bundler).
+- `npm run dev` (`tsx`) tipləri **yoxlamır**. Tip xətalarını `typecheck` tapır.

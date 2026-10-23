@@ -32,7 +32,24 @@ Server yalnız bütün vacib mühit dəyişənləri düzgün verildikdə başlas
 - HMAC-SHA256 və açar uzunluğu
 
 ## Qəbul meyarları
-- [ ] `JWT_ACCESS_SECRET` silinəndə server başlamır və konsolda hansı dəyişənin çatışmadığı yazılır.
-- [ ] Kodda `|| "secret"` tipli fallback qalmayıb.
-- [ ] `process.env` yalnız bir faylda oxunur (`Grep` ilə yoxla).
-- [ ] `.env.example` mövcuddur.
+- [x] `JWT_SECRET` silinəndə və ya 32 simvoldan qısa olanda server başlamır (dəyişənin adı faktiki `JWT_SECRET`-dir).
+- [x] Kodda `|| "secret"` tipli fallback qalmayıb.
+- [x] `process.env` yalnız `src/config/env.ts`-də oxunur. İstisna: `drizzle.config.ts` (drizzle-kit ayrıca prosesdir).
+- [~] `.env.example` mövcuddur, amma `DATABASE_URL` və `REDIS_URL` hələ boşdur (aşağıya bax).
+
+---
+
+## Bağlanış qeydi: nə edildi
+- `src/config/env.ts` yaradıldı, bütün env dəyişənləri **zod** ilə yoxlanılır: `JWT_SECRET` (min. 32 simvol), `PORT` (default 3333), `DATABASE_URL`, `REDIS_URL`, `NODE_ENV` (`development` / `test` / `production`, default `development`; task 007-də əlavə olunub).
+- Dəyərlər səhvdirsə proses `ZodError` ilə **başlamır**.
+- `export const env = envSchema.parse(process.env)`: `env.X` birbaşa tipli istifadə olunur (`env.data!` və `as string` ehtiyacı qalmadı).
+- Köhnə `|| "secret"` və `|| "redis://localhost:6379"` fallback-ları silindi.
+- Yalnız `env.ts` `dotenv/config` import edir.
+
+## Sonraya saxlananlar
+- [ ] `.env.example`-də `DATABASE_URL` və `REDIS_URL` üçün dev compose-a uyğun nümunə dəyər yaz: `postgresql://radar_user:radar_password@localhost:5432/radar_db` və `redis://localhost:6379`. `JWT_SECRET` yanında "ən azı 32 simvol" şərhi.
+- [ ] İstəyə bağlı: oxunaqlı xəta çıxışı (`safeParse` + `z.prettifyError`).
+- [ ] `drizzle.config.ts` hələ `process.env` oxuyur (bilərəkdən: ayrıca CLI prosesidir).
+
+## Dərs
+Konfiqurasiya xətası **start zamanı** tutulmalıdır, ilk istifadəçi sorğusunda yox.

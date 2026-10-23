@@ -1,0 +1,98 @@
+export const CustomErrorCodes = {
+  INVALID_INPUT: {
+    statusCode: 400,
+    message: "Invalid Input",
+    retryable: false,
+    code: "INVALID_INPUT",
+  },
+  SESSION_EXPIRED: {
+    statusCode: 401,
+    message: "Session expired",
+    retryable: false,
+    code: "SESSION_EXPIRED",
+  },
+  ACCESS_DENIED: {
+    statusCode: 403,
+    message: "Access denied",
+    retryable: false,
+    code: "ACCESS_DENIED",
+  },
+  USER_RESTRICTED: {
+    statusCode: 403,
+    message: "User is banned or muted",
+    retryable: false,
+    code: "USER_RESTRICTED",
+  },
+  NOT_FOUND: {
+    statusCode: 404,
+    message: "Not found",
+    retryable: false,
+    code: "NOT_FOUND",
+  },
+  ANSWER_LOCKED: {
+    statusCode: 409,
+    message: "Answer has already been submitted",
+    retryable: false,
+    code: "ANSWER_LOCKED",
+  },
+  CHALLENGE_NOT_READY: {
+    statusCode: 409,
+    message: "Challenges are not completed yet",
+    retryable: false,
+    code: "CHALLENGE_NOT_READY",
+  },
+  ODDS_CHANGED: {
+    statusCode: 409,
+    message: "Odds have changed",
+    retryable: false,
+    code: "ODDS_CHANGED",
+  },
+  OUTCOME_UNAVAILABLE: {
+    statusCode: 409,
+    message: "Odds are unavailable",
+    retryable: false,
+    code: "OUTCOME_UNAVAILABLE",
+  },
+  IDEMPOTENCY_CONFLICT: {
+    statusCode: 409,
+    message: "Same idempotency key with different data",
+    retryable: false,
+    code: "IDEMPOTENCY_CONFLICT",
+  },
+  INSUFFICIENT_COINS: {
+    statusCode: 409,
+    message: "Insufficient coins",
+    retryable: false,
+    code: "INSUFFICIENT_COINS",
+  },
+  ALREADY_OWNED: {
+    statusCode: 409,
+    message: "Item is already owned",
+    retryable: false,
+    code: "ALREADY_OWNED",
+  },
+  BATTLE_EXPIRED: {
+    statusCode: 410,
+    message: "Battle has expired",
+    retryable: false,
+    code: "BATTLE_EXPIRED",
+  },
+  RATE_LIMITED: {
+    statusCode: 429,
+    message: "Too many requests",
+    retryable: true,
+    code: "RATE_LIMITED",
+  },
+  INTERNAL: {
+    statusCode: 500,
+    message: "Internal server error",
+    retryable: true,
+    code: "INTERNAL",
+  },
+  FEED_UNAVAILABLE: {
+    statusCode: 503,
+    message: "Match feed is unavailable",
+    retryable: true,
+    code: "FEED_UNAVAILABLE",
+  },
+};

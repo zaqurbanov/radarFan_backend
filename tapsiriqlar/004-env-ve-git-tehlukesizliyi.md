@@ -16,5 +16,12 @@ Secret-lər heç vaxt git tarixçəsində olmasın.
 4. `.gitignore`-a əlavə et: `dist/`, `coverage/`, `*.log`, `.env.*` (amma `.env.example` istisna olsun, `!` qaydasını araşdır).
 
 ## Qəbul meyarları
-- [ ] `git ls-files` siyahısında `.env` yoxdur.
-- [ ] `.env.example` izlənir, `.env` izlənmir.
+- [x] `git ls-files` siyahısında `.env` yoxdur.
+- [x] `.env.example` izlənir, `.env` izlənmir.
+
+---
+
+## Bağlanış qeydi: nə yoxlanıldı
+- `git log --all -- .env` **boşdur**: `.env` heç vaxt commit olunmayıb.
+- Tarixçədə `JWT_SECRET=<dəyər>` tipli sətir tapılmadı, secret-ləri dəyişməyə ehtiyac olmadı.
+- `.gitignore`-da `.env` var. `.env.test` bilərəkdən repoda saxlanılır (yalnız lokal test konteynerlərinin uydurma parolları, fayla `# only local test` şərhi yazılıb). Bu fayla **heç vaxt real secret yazma**.
