@@ -21,7 +21,7 @@ Faiz: həmin faza bitəndə backend-in təxminən neçə faizi hazırdır.
 - [x] [008 — Bütün cavablar eyni formada](008-vahid-cavab-formati.md)
 - [x] [009 — Xəta kodları sistemi](009-xeta-kodlari-sistemi.md)
 - [x] [010 — Gələn məlumatın yoxlanması (validasiya)](010-input-validasiyasi.md)
-- [ ] [011 — Loglar: səliqəli və təhlükəsiz](011-request-id-logger-redaction.md)
+- [x] [011 — Loglar: səliqəli və təhlükəsiz](011-request-id-logger-redaction.md)
 - [ ] [012 — Avtomatik testlər üçün hazırlıq](012-test-infrastrukturu.md)
 
 ## Faza 1 — Auth, tenant, istifadəçi → 18%

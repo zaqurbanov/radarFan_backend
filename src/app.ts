@@ -12,6 +12,7 @@ import { successResponse } from "./common/responses/success.js"
 import { errorResponse } from "./common/responses/error.response.js"
 import { CustomErrorCodes } from "./common/constants/errorCodes.js"
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from "fastify-type-provider-zod"
+import { loggerOptions } from "./config/logger.js"
 // Fastify və kitabxanalar istifadəçi səhvini HTTP statusu ilə bildirir (400–499).
 // Biz onu öz kataloqumuzdakı koda çeviririk ki, frontend həmişə YALNIZ bizim kodları görsün.
 const clientErrorByStatus = {
@@ -26,7 +27,7 @@ const clientErrorByStatus = {
 
 export const buildApp =()=>{
   const app =Fastify({
-    logger:true,
+    logger:loggerOptions,
     genReqId:()=>crypto.randomUUID(),
   }).withTypeProvider<ZodTypeProvider>()
 

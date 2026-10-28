@@ -10,6 +10,7 @@ import {z} from 'zod';
   REDIS_URL:z.string("Redis URL is required, please Check .env file").min(1,"Redis URL must be minimum 1 characters long , please Check .env file"),
   NODE_ENV:z.enum(["development","test","production"]).default("development"),
   ACCESS_TOKEN_TTL:z.string("ACCESS_TOKEN_TTL is required, please Check .env file"),
+  LOG_LEVEL:z.enum(["fatal","error","warn","info","debug","trace","silent"]).default("info"),
 })
 export const env  = envSchema.parse(process.env);
 
