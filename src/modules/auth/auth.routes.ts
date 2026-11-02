@@ -79,6 +79,13 @@ export async function authRoutes(rawApp: FastifyInstance) {
       }
       if (payload.aud !== "RADAR.FAN") throw new SessionExpiredError();
       if (payload.iss !== "demo-bet") throw new SessionExpiredError();
+      if(typeof payload.nonce !== "string" ||
+        payload.nonce.length == 0 ||
+        typeof payload.external_user_id !== "string" ||
+        typeof payload.tenant_id !== "string"
+
+
+      ) throw new SessionExpiredError();
       const nonceKey = `nonce:${payload.nonce}`;
 
       const result = await redis.set(nonceKey, "1", "EX", 60, "NX");
