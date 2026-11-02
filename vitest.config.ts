@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     globals: true, // describe, it, expect qlobal olsun deyə
     environment: "node",
+    fileParallelism:false,
     // Təhlükəsizlik Guard-ı:
     setupFiles: ["./src/tests/setup.ts"],
     globalSetup: ["./src/tests/globalSetup.ts"],
