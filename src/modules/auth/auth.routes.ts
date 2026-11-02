@@ -73,12 +73,13 @@ export async function authRoutes(rawApp: FastifyInstance) {
           external_user_id: string;
           nickname?: string;
           nonce: string;
-        }>(req.body.launch_token);
+        }>(req.body.launch_token,{
+          allowedAud:"RADAR.FAN",
+          allowedIss:"demo-bet"
+        });
       } catch (error) {
         throw new SessionExpiredError();
       }
-      if (payload.aud !== "RADAR.FAN") throw new SessionExpiredError();
-      if (payload.iss !== "demo-bet") throw new SessionExpiredError();
       if(typeof payload.nonce !== "string" ||
         payload.nonce.length == 0 ||
         typeof payload.external_user_id !== "string" ||
@@ -125,7 +126,7 @@ export async function authRoutes(rawApp: FastifyInstance) {
           tenant_id: tenant.id,
           role: user!.role,
           iss: "RADAR.FAN",
-          aud: "radafan-api",
+          aud: "radarfan-api",
         },
         { expiresIn: env.ACCESS_TOKEN_TTL || "15m" }
       );
@@ -151,9 +152,7 @@ export async function authRoutes(rawApp: FastifyInstance) {
       tenant_id: string;
       iss: string;
       aud: string;
-    }>();
-    if (decoded.iss !== "RADAR.FAN") throw new AccessDenied();
-    if (decoded.aud !== "radafan-api") throw new AccessDenied();
+    }>({allowedAud:"radarfan-api",allowedIss:"RADAR.FAN"});
     const [user] = await db
       .select()
       .from(users)
