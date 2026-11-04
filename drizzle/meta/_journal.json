@@ -8,6 +8,20 @@
       "when": 1792443915854,
       "tag": "0000_amused_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793778190172,
+      "tag": "0001_secret_odin",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793779012768,
+      "tag": "0002_sturdy_human_fly",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "tenant_launch_keys" ALTER COLUMN "created_at" SET DEFAULT now();

@@ -7,3 +7,4 @@ export * from './schemas/events.schema.js';
 export * from './schemas/markets.schema.js';
 export * from './schemas/outcomes.schema.js';
 export * from './schemas/favorites.schema.js';
+export * from './schemas/tenant_launch_keys.schema.js'
